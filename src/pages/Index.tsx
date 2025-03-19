@@ -10,19 +10,15 @@ import { Plus, RefreshCw, UserRound, ShoppingCart, PlusCircle } from 'lucide-rea
 import { CategoryType } from '@/types/grocery';
 
 const Index = () => {
-  const { items, currentUser, setUserName } = useGroceryStore();
+  const { items, currentUser, setUserName, fetchItems, isLoading } = useGroceryStore();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSettingName, setIsSettingName] = useState(false);
   const [newName, setNewName] = useState(currentUser.name);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate loading for a smoother experience
+  // Fetch items when component mounts
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchItems();
+  }, [fetchItems]);
 
   // Handle name change
   const handleNameChange = (e: React.FormEvent) => {

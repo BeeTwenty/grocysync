@@ -9,13 +9,111 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          color: string
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color: string
+          icon: string
+          id: string
+          name: string
+        }
+        Update: {
+          color?: string
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      items: {
+        Row: {
+          added_at: string
+          added_by: string
+          category: string
+          completed: boolean
+          completed_at: string | null
+          completed_by: string | null
+          id: string
+          name: string
+          quantity: number | null
+          unit: string | null
+        }
+        Insert: {
+          added_at?: string
+          added_by: string
+          category: string
+          completed?: boolean
+          completed_at?: string | null
+          completed_by?: string | null
+          id?: string
+          name: string
+          quantity?: number | null
+          unit?: string | null
+        }
+        Update: {
+          added_at?: string
+          added_by?: string
+          category?: string
+          completed?: boolean
+          completed_at?: string | null
+          completed_by?: string | null
+          id?: string
+          name?: string
+          quantity?: number | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keyword_categories: {
+        Row: {
+          category_id: string
+          id: number
+          keyword: string
+        }
+        Insert: {
+          category_id: string
+          id?: number
+          keyword: string
+        }
+        Update: {
+          category_id?: string
+          id?: number
+          keyword?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keyword_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      categorize_item: {
+        Args: {
+          item_name: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

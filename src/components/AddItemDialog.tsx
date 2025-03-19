@@ -22,8 +22,9 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
   const [category, setCategory] = useState<CategoryType | undefined>(undefined);
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!name.trim()) {
@@ -31,20 +32,27 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
       return;
     }
     
-    // Create new item (category will be auto-detected if not specified)
-    addItem({
-      name: name.trim(),
-      category, // This can be undefined and will be auto-detected
-      quantity: quantity ? parseInt(quantity, 10) : undefined,
-      unit: unit.trim() || undefined,
-      completed: false,
-    });
+    setIsSubmitting(true);
     
-    // Reset form and close dialog
-    resetForm();
-    onOpenChange(false);
-    
-    toast.success(`Added ${name} to your grocery list`);
+    try {
+      // Create new item (category will be auto-detected if not specified)
+      await addItem({
+        name: name.trim(),
+        category, // This can be undefined and will be auto-detected
+        quantity: quantity ? parseInt(quantity, 10) : undefined,
+        unit: unit.trim() || undefined,
+        completed: false,
+      });
+      
+      // Reset form and close dialog
+      resetForm();
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error adding item:", error);
+      toast.error("Failed to add item. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const resetForm = () => {
@@ -131,11 +139,16 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
                 onOpenChange(false);
               }}
               className="glass border-none"
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" className="glass border-none bg-primary text-white">
-              Add Item
+            <Button 
+              type="submit" 
+              className="glass border-none bg-primary text-white"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Adding..." : "Add Item"}
             </Button>
           </DialogFooter>
         </form>

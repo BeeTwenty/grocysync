@@ -1,8 +1,8 @@
 
 import { create } from 'zustand';
-import { v4 as uuidv4 } from 'uuid';
 import { GroceryItem, CategoryType, CategoryDefinition } from '../types/grocery';
-import { CategorizationService } from './categorizationService';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // Define categories with their properties
 export const categories: CategoryDefinition[] = [
@@ -15,63 +15,6 @@ export const categories: CategoryDefinition[] = [
   { id: 'household', name: 'Household', icon: 'shopping-bag', color: 'bg-category-household' },
   { id: 'other', name: 'Other', icon: 'tag', color: 'bg-category-other' },
 ];
-
-// Create a WebSocket connection for real-time updates
-const setupWebSocket = (setState: any) => {
-  // In a real implementation, we'd connect to a WebSocket server
-  // For this demo, we'll simulate real-time updates
-  
-  // Mock receiving updates every few seconds (for demo purposes)
-  const mockWebSocketInterval = setInterval(() => {
-    // Simulated random update from another user
-    if (Math.random() > 0.7) {
-      const randomUser = Math.random() > 0.5 ? 'Alex' : 'Jamie';
-      console.log(`Simulated update from ${randomUser}`);
-      // We'd handle real updates here
-    }
-  }, 10000);
-
-  return () => {
-    clearInterval(mockWebSocketInterval);
-  };
-};
-
-// For demo purposes, generate some example grocery items
-const generateExampleItems = (): GroceryItem[] => {
-  return [
-    {
-      id: uuidv4(),
-      name: 'Milk',
-      category: 'dairy',
-      completed: false,
-      quantity: 1,
-      unit: 'gallon',
-      addedBy: 'Alex',
-      addedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    },
-    {
-      id: uuidv4(),
-      name: 'Apples',
-      category: 'produce',
-      completed: false,
-      quantity: 6,
-      addedBy: 'Jamie',
-      addedAt: new Date(Date.now() - 48 * 60 * 60 * 1000),
-    },
-    {
-      id: uuidv4(),
-      name: 'Bread',
-      category: 'bakery',
-      completed: true,
-      quantity: 1,
-      unit: 'loaf',
-      addedBy: 'Alex',
-      addedAt: new Date(Date.now() - 72 * 60 * 60 * 1000),
-      completedBy: 'Jamie',
-      completedAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
-    },
-  ];
-};
 
 // Get current user - in a real app, this would come from authentication
 const getCurrentUser = () => {
@@ -91,77 +34,177 @@ interface GroceryState {
   currentUser: { id: string; name: string };
   isLoading: boolean;
   error: string | null;
-  addItem: (item: Omit<GroceryItem, 'id' | 'addedBy' | 'addedAt' | 'category'> & { category?: CategoryType }) => void;
-  toggleItem: (id: string) => void;
-  removeItem: (id: string) => void;
+  fetchItems: () => Promise<void>;
+  addItem: (item: Omit<GroceryItem, 'id' | 'addedBy' | 'addedAt' | 'category'> & { category?: CategoryType }) => Promise<void>;
+  toggleItem: (id: string) => Promise<void>;
+  removeItem: (id: string) => Promise<void>;
   setUserName: (name: string) => void;
 }
 
 export const useGroceryStore = create<GroceryState>((set, get) => {
-  // Initialize WebSocket connection for real-time updates
-  const cleanupWebSocket = setupWebSocket(set);
+  // Set up realtime subscription
+  const setupRealtimeSubscription = () => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'items'
+        },
+        () => {
+          // Refetch items when changes occur
+          get().fetchItems();
+        }
+      )
+      .subscribe();
+
+    // Return cleanup function
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  // Set up realtime subscription when the store is created
+  setupRealtimeSubscription();
 
   return {
-    items: generateExampleItems(),
+    items: [],
     currentUser: getCurrentUser(),
-    isLoading: false,
+    isLoading: true,
     error: null,
     
-    addItem: (itemData) => {
-      set(state => {
-        // Auto-categorize the item if category isn't provided
-        const category = itemData.category || CategorizationService.categorizeItem(itemData.name);
-        
-        const newItem: GroceryItem = {
-          id: uuidv4(),
-          ...itemData,
-          category,
-          addedBy: state.currentUser.name,
-          addedAt: new Date(),
-          completed: false,
-        };
-        
-        // Simulate storing in backend
-        CategorizationService.storeItemInBackend(newItem)
-          .then(() => {
-            console.log('Item successfully added to backend');
-          })
-          .catch(error => {
-            console.error('Failed to add item to backend:', error);
-          });
-        
-        return {
-          items: [...state.items, newItem]
-        };
-      });
-    },
-    
-    toggleItem: (id) => {
-      set(state => {
-        const updatedItems = state.items.map(item => {
-          if (item.id === id) {
-            const completed = !item.completed;
-            return {
-              ...item,
-              completed,
-              completedBy: completed ? state.currentUser.name : undefined,
-              completedAt: completed ? new Date() : undefined,
-            };
-          }
-          return item;
-        });
-        
-        // In a real implementation, we'd send this update to the backend
-        return { items: updatedItems };
-      });
-    },
-    
-    removeItem: (id) => {
-      set(state => ({
-        items: state.items.filter(item => item.id !== id)
-      }));
+    fetchItems: async () => {
+      set({ isLoading: true, error: null });
       
-      // In a real implementation, we'd send this update to the backend
+      try {
+        const { data: items, error } = await supabase
+          .from('items')
+          .select('*')
+          .order('added_at', { ascending: false });
+          
+        if (error) {
+          throw error;
+        }
+        
+        // Transform database items to our app's format
+        const transformedItems: GroceryItem[] = items.map(item => ({
+          id: item.id,
+          name: item.name,
+          category: item.category as CategoryType,
+          completed: item.completed,
+          quantity: item.quantity || undefined,
+          unit: item.unit || undefined,
+          addedBy: item.added_by,
+          addedAt: new Date(item.added_at),
+          completedBy: item.completed_by || undefined,
+          completedAt: item.completed_at ? new Date(item.completed_at) : undefined
+        }));
+        
+        set({ items: transformedItems, isLoading: false });
+      } catch (error) {
+        console.error('Error fetching items:', error);
+        set({ 
+          error: 'Failed to fetch grocery items. Please try again later.', 
+          isLoading: false 
+        });
+        toast.error('Failed to fetch grocery items');
+      }
+    },
+    
+    addItem: async (itemData) => {
+      try {
+        const { name, completed, quantity, unit } = itemData;
+        
+        // Use provided category or let Supabase auto-categorize
+        let category = itemData.category;
+        
+        if (!category) {
+          // Call the database function to categorize the item
+          const { data, error: funcError } = await supabase
+            .rpc('categorize_item', { item_name: name });
+            
+          if (funcError) {
+            throw funcError;
+          }
+          
+          category = data as CategoryType;
+        }
+        
+        // Insert the new item
+        const { data: newItem, error } = await supabase
+          .from('items')
+          .insert({
+            name,
+            category,
+            completed: completed || false,
+            quantity,
+            unit,
+            added_by: get().currentUser.name
+          })
+          .select()
+          .single();
+          
+        if (error) {
+          throw error;
+        }
+        
+        // The fetchItems will be triggered automatically by the realtime subscription
+        toast.success(`Added ${name} to your grocery list`);
+      } catch (error) {
+        console.error('Error adding item:', error);
+        toast.error('Failed to add item to your grocery list');
+      }
+    },
+    
+    toggleItem: async (id) => {
+      try {
+        const item = get().items.find(item => item.id === id);
+        
+        if (!item) {
+          throw new Error('Item not found');
+        }
+        
+        const completed = !item.completed;
+        
+        const { error } = await supabase
+          .from('items')
+          .update({
+            completed,
+            completed_by: completed ? get().currentUser.name : null,
+            completed_at: completed ? new Date().toISOString() : null
+          })
+          .eq('id', id);
+          
+        if (error) {
+          throw error;
+        }
+        
+        // The fetchItems will be triggered automatically by the realtime subscription
+      } catch (error) {
+        console.error('Error toggling item:', error);
+        toast.error('Failed to update item status');
+      }
+    },
+    
+    removeItem: async (id) => {
+      try {
+        const { error } = await supabase
+          .from('items')
+          .delete()
+          .eq('id', id);
+          
+        if (error) {
+          throw error;
+        }
+        
+        // The fetchItems will be triggered automatically by the realtime subscription
+        toast.success('Item removed from your grocery list');
+      } catch (error) {
+        console.error('Error removing item:', error);
+        toast.error('Failed to remove item from your grocery list');
+      }
     },
     
     setUserName: (name) => {
@@ -171,11 +214,6 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
       }));
     }
   };
-});
-
-// Cleanup WebSocket on app unmount
-window.addEventListener('beforeunload', () => {
-  // Cleanup WebSocket connection
 });
 
 // Function to get category by ID
