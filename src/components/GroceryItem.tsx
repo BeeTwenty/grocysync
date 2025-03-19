@@ -15,6 +15,7 @@ interface GroceryItemProps {
 const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
   const { toggleItem, removeItem, updateItemQuantity } = useGroceryStore();
   const [isHovered, setIsHovered] = useState(false);
+  const [isTouched, setIsTouched] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -65,6 +66,19 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
     };
   }, [item.completed, item.id, item.name, removeItem, toast]);
 
+  // Handle touch for mobile users
+  const handleTouchStart = () => {
+    if (isMobile) {
+      setIsTouched(true);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (isMobile) {
+      setIsTouched(false);
+    }
+  };
+
   // Handle quantity adjustment
   const handleQuantityChange = (increment: boolean) => {
     const newQuantity = increment 
@@ -83,12 +97,14 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <div className="flex items-center gap-3">
         <button
           onClick={() => toggleItem(item.id)}
           className={cn(
-            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all",
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-all",
             item.completed 
               ? "bg-primary border-primary text-white" 
               : "border-gray-300 bg-white text-white hover:border-primary"
@@ -101,7 +117,7 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
         <div className="flex-1 space-y-1">
           <div className="flex items-center justify-between">
             <p className={cn(
-              "font-medium transition-all",
+              "font-medium transition-all text-base",
               item.completed && "line-through text-muted-foreground"
             )}>
               {item.name}
@@ -112,19 +128,19 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
               <div className="flex items-center gap-1 ml-2 bg-white/70 text-foreground rounded-full">
                 <button 
                   onClick={() => handleQuantityChange(false)}
-                  className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
+                  className="h-7 w-7 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
                   aria-label="Decrease quantity"
                 >
                   <Minus className="h-3 w-3" />
                 </button>
                 
-                <span className="text-sm px-1">
+                <span className="text-sm px-1 min-w-6 text-center">
                   {item.quantity || 1} {item.unit || 'x'}
                 </span>
                 
                 <button 
                   onClick={() => handleQuantityChange(true)}
-                  className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
+                  className="h-7 w-7 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
                   aria-label="Increase quantity"
                 >
                   <Plus className="h-3 w-3" />
@@ -161,12 +177,12 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
       <div 
         className={cn(
           "absolute right-2 top-2 flex space-x-1 transition-opacity",
-          (isHovered || isMobile) ? "opacity-100" : "opacity-0"
+          (isHovered || isTouched || isMobile) ? "opacity-100" : "opacity-0"
         )}
       >
         <button 
           onClick={() => removeItem(item.id)}
-          className="rounded-full p-1 text-red-500 bg-white/80 hover:bg-white transition-colors"
+          className="rounded-full p-2 text-red-500 bg-white/80 hover:bg-white transition-colors"
           aria-label="Delete item"
         >
           <Trash2 className="h-4 w-4" />

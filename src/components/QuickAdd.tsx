@@ -6,12 +6,14 @@ import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
 import { Slider } from './ui/slider';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const QuickAdd: React.FC = () => {
   const { addItem } = useGroceryStore();
   const [itemName, setItemName] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +49,7 @@ const QuickAdd: React.FC = () => {
       <div className="flex items-center gap-2">
         <Input
           type="text"
-          placeholder="Add item quickly..."
+          placeholder={isMobile ? "Add item..." : "Add item quickly..."}
           value={itemName}
           onChange={(e) => setItemName(e.target.value)}
           className="glass h-10 md:h-9 flex-1 rounded-full border-none text-base md:text-sm"
@@ -64,6 +66,30 @@ const QuickAdd: React.FC = () => {
             className="w-24"
           />
         </div>
+        
+        {isMobile && (
+          <div className="flex items-center gap-1">
+            <Button 
+              type="button" 
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              className="rounded-full glass border-none bg-secondary text-foreground h-8 w-8 p-0"
+              disabled={quantity <= 1}
+              aria-label="Decrease quantity"
+            >
+              -
+            </Button>
+            <span className="text-sm min-w-6 text-center">{quantity}</span>
+            <Button 
+              type="button" 
+              onClick={() => setQuantity(Math.min(10, quantity + 1))}
+              className="rounded-full glass border-none bg-secondary text-foreground h-8 w-8 p-0"
+              disabled={quantity >= 10}
+              aria-label="Increase quantity"
+            >
+              +
+            </Button>
+          </div>
+        )}
         
         <Button 
           type="submit" 
