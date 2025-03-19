@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useGroceryStore, categories, getCategoryById } from '@/lib/groceryStore';
 import CategorySection from '@/components/CategorySection';
@@ -14,6 +15,7 @@ const Index = () => {
     currentUser,
     setUserName,
     fetchItems,
+    fetchCurrentUser,
     isLoading
   } = useGroceryStore();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -21,10 +23,16 @@ const Index = () => {
   const [newName, setNewName] = useState(currentUser.name);
   const [activeTab, setActiveTab] = useState("all");
 
-  // Fetch items when component mounts
+  // Fetch items and current user when component mounts
   useEffect(() => {
     fetchItems();
-  }, [fetchItems]);
+    fetchCurrentUser();
+  }, [fetchItems, fetchCurrentUser]);
+
+  // Update newName when currentUser changes
+  useEffect(() => {
+    setNewName(currentUser.name);
+  }, [currentUser.name]);
 
   // Handle name change
   const handleNameChange = (e: React.FormEvent) => {

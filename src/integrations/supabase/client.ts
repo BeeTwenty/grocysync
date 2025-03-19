@@ -18,6 +18,19 @@ export const getCurrentUser = async () => {
   return data.session.user;
 };
 
+export const getUserDisplayName = async () => {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  
+  // First check if user_metadata has a name field
+  if (user.user_metadata && user.user_metadata.name) {
+    return user.user_metadata.name;
+  }
+  
+  // Fall back to email if no display name is set
+  return user.email;
+};
+
 export const signIn = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -35,16 +48,28 @@ export const isUserAdmin = async () => {
   if (!user) return false;
   
   // Check if user has admin role in metadata
-  // Replace this with your actual admin check logic based on your app's requirements
   return user.app_metadata?.role === 'admin';
 };
 
-export const createUserByAdmin = async (email: string, password: string, role: 'admin' | 'user' = 'user') => {
+export const createUserByAdmin = async (email: string, password: string, role: 'admin' | 'user' = 'user', displayName?: string) => {
+  const metadata = { role };
+  
+  // Add display name if provided
+  const userMetadata = displayName ? { name: displayName } : undefined;
+  
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    app_metadata: { role },
+    app_metadata: metadata,
+    user_metadata: userMetadata,
+  });
+  return { data, error };
+};
+
+export const updateUserDisplayName = async (displayName: string) => {
+  const { data, error } = await supabase.auth.updateUser({
+    data: { name: displayName }
   });
   return { data, error };
 };

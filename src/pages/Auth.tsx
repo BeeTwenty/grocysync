@@ -14,6 +14,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
@@ -81,7 +82,7 @@ const Auth = () => {
         return;
       }
       
-      const { error } = await createUserByAdmin(newEmail, newPassword, 'user');
+      const { error } = await createUserByAdmin(newEmail, newPassword, 'user', displayName);
       
       if (error) {
         toast.error(error.message);
@@ -89,6 +90,7 @@ const Auth = () => {
         toast.success('User created successfully');
         setNewEmail('');
         setNewPassword('');
+        setDisplayName('');
         setShowCreateUser(false);
       }
     } catch (error) {
@@ -180,6 +182,17 @@ const Auth = () => {
                     onChange={(e) => setNewEmail(e.target.value)}
                     placeholder="user@example.com"
                     required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">Display Name</Label>
+                  <Input
+                    id="displayName"
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="John Doe"
                   />
                 </div>
                 

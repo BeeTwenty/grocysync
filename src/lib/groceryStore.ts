@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { GroceryItem, CategoryType, CategoryDefinition } from '../types/grocery';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, getUserDisplayName } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // Define categories with their properties using the updated data
@@ -31,17 +31,29 @@ export const categories: CategoryDefinition[] = [
   { id: 'vegetables', name: 'Grønnsaker', icon: 'carrot', color: 'bg-category-produce' }
 ];
 
-// Get current user - in a real app, this would come from authentication
-const getCurrentUser = () => {
+// Get current user from Supabase
+const getCurrentUser = async () => {
+  const displayName = await getUserDisplayName();
   return {
     id: 'user1',
-    name: localStorage.getItem('userName') || 'You'
+    name: displayName || 'You'
   };
 };
 
-// Store the user name in localStorage
-export const setUserName = (name: string) => {
-  localStorage.setItem('userName', name);
+// Store is no longer needed as we use Supabase user_metadata
+export const setUserName = async (name: string) => {
+  const { error } = await supabase.auth.updateUser({
+    data: { name }
+  });
+  
+  if (error) {
+    toast.error('Failed to update display name');
+    console.error('Error updating display name:', error);
+    return false;
+  }
+  
+  toast.success('Display name updated successfully');
+  return true;
 };
 
 interface GroceryState {
@@ -50,10 +62,11 @@ interface GroceryState {
   isLoading: boolean;
   error: string | null;
   fetchItems: () => Promise<void>;
+  fetchCurrentUser: () => Promise<void>;
   addItem: (item: Omit<GroceryItem, 'id' | 'addedBy' | 'addedAt' | 'category'> & { category?: CategoryType }) => Promise<void>;
   toggleItem: (id: string) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
-  setUserName: (name: string) => void;
+  setUserName: (name: string) => Promise<void>;
 }
 
 export const useGroceryStore = create<GroceryState>((set, get) => {
@@ -86,7 +99,7 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
 
   return {
     items: [],
-    currentUser: getCurrentUser(),
+    currentUser: { id: 'user1', name: 'You' },
     isLoading: true,
     error: null,
     
@@ -125,6 +138,15 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
           isLoading: false 
         });
         toast.error('Failed to fetch grocery items');
+      }
+    },
+    
+    fetchCurrentUser: async () => {
+      try {
+        const user = await getCurrentUser();
+        set({ currentUser: user });
+      } catch (error) {
+        console.error('Error fetching current user:', error);
       }
     },
     
@@ -222,11 +244,13 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
       }
     },
     
-    setUserName: (name) => {
-      setUserName(name);
-      set(state => ({
-        currentUser: { ...state.currentUser, name }
-      }));
+    setUserName: async (name) => {
+      const success = await setUserName(name);
+      if (success) {
+        set(state => ({
+          currentUser: { ...state.currentUser, name }
+        }));
+      }
     }
   };
 });
