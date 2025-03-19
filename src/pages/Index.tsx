@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { useGroceryStore, categories, getCategoryById } from '@/lib/groceryStore';
+import { useGroceryStore, categories } from '@/lib/groceryStore';
 import CategorySection from '@/components/CategorySection';
 import AddItemDialog from '@/components/AddItemDialog';
 import EmptyState from '@/components/EmptyState';
@@ -9,8 +10,12 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, RefreshCw, UserRound, ShoppingCart, PlusCircle, HelpCircle } from 'lucide-react';
+import { Plus, RefreshCw, UserRound, ShoppingCart, PlusCircle, HelpCircle, LogOut } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNavigate } from 'react-router-dom';
+import { signOut } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
 const Index = () => {
   const {
     items,
@@ -25,6 +30,7 @@ const Index = () => {
   const [newName, setNewName] = useState(currentUser.name);
   const [activeTab, setActiveTab] = useState("all");
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   // Fetch items and current user when component mounts
   useEffect(() => {
@@ -43,6 +49,18 @@ const Index = () => {
     if (newName.trim()) {
       setUserName(newName.trim());
       setIsSettingName(false);
+    }
+  };
+
+  // Handle sign out
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+      navigate('/auth');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
     }
   };
 
@@ -94,6 +112,16 @@ const Index = () => {
                   <UserRound className="h-4 w-4" />
                   <span>{currentUser.name}</span>
                 </Button>}
+              
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleSignOut} 
+                className="text-muted-foreground hover:text-foreground flex gap-2 items-center"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </Button>
               
               {!isMobile && <Button onClick={() => setIsAddDialogOpen(true)} className="glass border-none bg-primary text-slate-500">
                   <Plus className="mr-2 h-4 w-4" /> Add Item
