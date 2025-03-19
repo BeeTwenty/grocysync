@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react';
 import { Slider } from './ui/slider';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTheme } from '@/hooks/use-theme';
 
 const QuickAdd: React.FC = () => {
   const { addItem } = useGroceryStore();
@@ -14,6 +15,7 @@ const QuickAdd: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isMobile = useIsMobile();
+  const { theme } = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +58,7 @@ const QuickAdd: React.FC = () => {
         />
         
         <div className="hidden sm:flex items-center gap-2 w-32">
-          <span className="text-sm text-muted-foreground">{quantity}</span>
+          <span className="text-sm text-foreground">{quantity}</span>
           <Slider
             value={[quantity]}
             min={1}
@@ -78,7 +80,7 @@ const QuickAdd: React.FC = () => {
             >
               -
             </Button>
-            <span className="text-sm min-w-6 text-center">{quantity}</span>
+            <span className="text-sm min-w-6 text-center text-foreground">{quantity}</span>
             <Button 
               type="button" 
               onClick={() => setQuantity(Math.min(10, quantity + 1))}
@@ -93,7 +95,7 @@ const QuickAdd: React.FC = () => {
         
         <Button 
           type="submit" 
-          className="rounded-full glass border-none bg-primary text-white h-10 w-10 p-0"
+          className="rounded-full glass border-none bg-primary text-primary-foreground h-10 w-10 p-0"
           disabled={isSubmitting}
           aria-label="Add item quickly"
         >

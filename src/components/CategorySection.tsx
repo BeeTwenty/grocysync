@@ -22,7 +22,7 @@ const categoryIcons: Record<string, React.FC<{ className?: string }>> = {
   'home': Home,
   'cookie': Cookie,
   'snowflake': Snowflake,
-  'glass-cheers': GlassWater,  // Replaced Glass with GlassWater
+  'glass-cheers': GlassWater,
   'glass-water': GlassWater,
   'cat': Cat,
   'utensils': Utensils,
@@ -39,11 +39,11 @@ const categoryIcons: Record<string, React.FC<{ className?: string }>> = {
   'apple': Apple,
   'pill': Pill,
   'capsules': Pill,
-  'seedling': Leaf,  // Replacing Seedling with Leaf icon
+  'seedling': Leaf,
   'drumstick': Drumstick,
   'drumstick-bite': Drumstick,
   'more-horizontal': MoreHorizontal,
-  'cannabis': Cannabis, // Using Cannabis for Plant
+  'cannabis': Cannabis,
   'plant': Cannabis,
   'carrot': Carrot,
   'flour': Package,
@@ -64,7 +64,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category, items }) =>
   return (
     <div className="mb-8 animate-slide-up" style={{ animationDelay: `${0.05 * items.length}s` }}>
       <div className="flex items-center gap-2 mb-3">
-        <div className={`rounded-full ${category.color} p-2 w-8 h-8 flex items-center justify-center`}>
+        <div className={`rounded-full ${category.color} dark:bg-opacity-30 p-2 w-8 h-8 flex items-center justify-center`}>
           <IconComponent className="h-4 w-4 text-foreground/80" />
         </div>
         <h2 className="text-xl font-medium">{category.name}</h2>
@@ -78,7 +78,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category, items }) =>
           <GroceryItem 
             key={item.id} 
             item={item} 
-            categoryColor={`${category.color}/30`}
+            categoryColor={`${category.color} dark:bg-opacity-20`}
           />
         ))}
       </div>

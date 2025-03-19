@@ -55,6 +55,11 @@
   color: #888;
 }
 
+/* Dark mode transitions */
+html.dark {
+  color-scheme: dark;
+}
+
 /* Mobile optimizations */
 @media (max-width: 767px) {
   .container {
