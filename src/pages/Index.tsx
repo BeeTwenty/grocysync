@@ -84,7 +84,7 @@ const Index = () => {
                   <span>{currentUser.name}</span>
                 </Button>}
               
-              <Button onClick={() => setIsAddDialogOpen(true)} className="glass border-none bg-primary text-white">
+              <Button onClick={() => setIsAddDialogOpen(true)} className="glass border-none bg-primary text-black">
                 <Plus className="mr-2 h-4 w-4" /> Add Item
               </Button>
             </div>
