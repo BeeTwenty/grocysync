@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useGroceryStore, categories } from '@/lib/groceryStore';
 import { CategoryType } from '@/types/grocery';
-import { Plus, ShoppingCart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { toast } from "sonner";
 
 interface AddItemDialogProps {
@@ -19,7 +19,7 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
   const { addItem } = useGroceryStore();
   
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<CategoryType>('produce');
+  const [category, setCategory] = useState<CategoryType | undefined>(undefined);
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState('');
   
@@ -31,10 +31,10 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
       return;
     }
     
-    // Create new item
+    // Create new item (category will be auto-detected if not specified)
     addItem({
       name: name.trim(),
-      category,
+      category, // This can be undefined and will be auto-detected
       quantity: quantity ? parseInt(quantity, 10) : undefined,
       unit: unit.trim() || undefined,
       completed: false,
@@ -49,7 +49,7 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
   
   const resetForm = () => {
     setName('');
-    setCategory('produce');
+    setCategory(undefined);
     setQuantity('1');
     setUnit('');
   };
@@ -63,7 +63,7 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
             Add Grocery Item
           </DialogTitle>
           <DialogDescription>
-            Add a new item to your shared grocery list.
+            Add a new item to your shared grocery list. Items will be automatically categorized.
           </DialogDescription>
         </DialogHeader>
         
@@ -81,10 +81,10 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">Category (Optional - Auto-detected)</Label>
             <Select value={category} onValueChange={(value) => setCategory(value as CategoryType)}>
               <SelectTrigger className="glass border-none">
-                <SelectValue placeholder="Select a category" />
+                <SelectValue placeholder="Auto-detect category" />
               </SelectTrigger>
               <SelectContent className="glass border-none">
                 {categories.map((cat) => (

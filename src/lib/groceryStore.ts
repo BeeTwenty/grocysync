@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { GroceryItem, CategoryType, CategoryDefinition } from '../types/grocery';
+import { CategorizationService } from './categorizationService';
 
 // Define categories with their properties
 export const categories: CategoryDefinition[] = [
@@ -90,7 +91,7 @@ interface GroceryState {
   currentUser: { id: string; name: string };
   isLoading: boolean;
   error: string | null;
-  addItem: (item: Omit<GroceryItem, 'id' | 'addedBy' | 'addedAt'>) => void;
+  addItem: (item: Omit<GroceryItem, 'id' | 'addedBy' | 'addedAt' | 'category'> & { category?: CategoryType }) => void;
   toggleItem: (id: string) => void;
   removeItem: (id: string) => void;
   setUserName: (name: string) => void;
@@ -107,20 +108,32 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
     error: null,
     
     addItem: (itemData) => {
-      const newItem: GroceryItem = {
-        id: uuidv4(),
-        ...itemData,
-        addedBy: get().currentUser.name,
-        addedAt: new Date(),
-        completed: false,
-      };
-      
-      set(state => ({
-        items: [...state.items, newItem]
-      }));
-      
-      // In a real implementation, we'd send this update to the WebSocket server
-      console.log('Added item:', newItem);
+      set(state => {
+        // Auto-categorize the item if category isn't provided
+        const category = itemData.category || CategorizationService.categorizeItem(itemData.name);
+        
+        const newItem: GroceryItem = {
+          id: uuidv4(),
+          ...itemData,
+          category,
+          addedBy: state.currentUser.name,
+          addedAt: new Date(),
+          completed: false,
+        };
+        
+        // Simulate storing in backend
+        CategorizationService.storeItemInBackend(newItem)
+          .then(() => {
+            console.log('Item successfully added to backend');
+          })
+          .catch(error => {
+            console.error('Failed to add item to backend:', error);
+          });
+        
+        return {
+          items: [...state.items, newItem]
+        };
+      });
     },
     
     toggleItem: (id) => {
@@ -138,7 +151,7 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
           return item;
         });
         
-        // In a real implementation, we'd send this update to the WebSocket server
+        // In a real implementation, we'd send this update to the backend
         return { items: updatedItems };
       });
     },
@@ -148,7 +161,7 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
         items: state.items.filter(item => item.id !== id)
       }));
       
-      // In a real implementation, we'd send this update to the WebSocket server
+      // In a real implementation, we'd send this update to the backend
     },
     
     setUserName: (name) => {
