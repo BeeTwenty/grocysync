@@ -19,29 +19,43 @@ const UnknownItemsTab: React.FC<UnknownItemsTabProps> = ({ items }) => {
   
   // Function to reassign an item to a different category
   const reassignCategory = async (item: GroceryItem, newCategoryId: CategoryType) => {
-    // Remove the current item
-    await removeItem(item.id);
-    
-    // Add a new item with the updated category
-    await useGroceryStore.getState().addItem({
-      name: item.name,
-      completed: item.completed,
-      quantity: item.quantity,
-      category: newCategoryId,
-    });
-    
-    toast.success(`Moved "${item.name}" to ${getCategoryById(newCategoryId).name} category`);
+    try {
+      // First, learn this categorization for future items
+      await CategorizationService.learnItemCategorization(item.name, newCategoryId);
+      
+      // Remove the current item
+      await removeItem(item.id);
+      
+      // Add a new item with the updated category
+      await useGroceryStore.getState().addItem({
+        name: item.name,
+        completed: item.completed,
+        quantity: item.quantity,
+        category: newCategoryId,
+      });
+      
+      toast.success(`Moved "${item.name}" to ${getCategoryById(newCategoryId).name} category`);
+    } catch (error) {
+      console.error("Error reassigning category:", error);
+      toast.error("Failed to reassign category. Please try again.");
+    }
   };
 
   // Function to auto-categorize an item
   const autoCategorizeSingle = async (item: GroceryItem) => {
-    const suggestedCategory = CategorizationService.categorizeItem(item.name);
-    
-    if (suggestedCategory !== 'unknown') {
-      await reassignCategory(item, suggestedCategory);
-      toast.success(`Auto-categorized "${item.name}" as ${getCategoryById(suggestedCategory).name}`);
-    } else {
-      toast.error(`Couldn't auto-categorize "${item.name}"`);
+    try {
+      // Get suggested category
+      const suggestedCategory = await CategorizationService.categorizeItem(item.name);
+      
+      if (suggestedCategory !== 'unknown') {
+        await reassignCategory(item, suggestedCategory);
+        toast.success(`Auto-categorized "${item.name}" as ${getCategoryById(suggestedCategory).name}`);
+      } else {
+        toast.error(`Couldn't auto-categorize "${item.name}"`);
+      }
+    } catch (error) {
+      console.error("Error auto-categorizing:", error);
+      toast.error("Failed to auto-categorize. Please try again.");
     }
   };
 

@@ -8,6 +8,7 @@ import { Slider } from './ui/slider';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTheme } from '@/hooks/use-theme';
+import { CategorizationService } from '@/lib/categorizationService';
 
 const QuickAdd: React.FC = () => {
   const { addItem } = useGroceryStore();
@@ -28,10 +29,14 @@ const QuickAdd: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Use categorization service to get the category
+      const category = await CategorizationService.categorizeItem(itemName.trim());
+      
       await addItem({
         name: itemName.trim(),
         quantity,
         completed: false,
+        category, // Use the determined category
       });
       
       // Reset form

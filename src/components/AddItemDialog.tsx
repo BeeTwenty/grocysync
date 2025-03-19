@@ -9,6 +9,7 @@ import { useGroceryStore, categories } from '@/lib/groceryStore';
 import { CategoryType } from '@/types/grocery';
 import { ShoppingCart } from 'lucide-react';
 import { toast } from "sonner";
+import { CategorizationService } from '@/lib/categorizationService';
 
 interface AddItemDialogProps {
   isOpen: boolean;
@@ -34,10 +35,20 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
     setIsSubmitting(true);
     
     try {
-      // Create new item (category will be auto-detected if not specified)
+      let itemCategory = category;
+      
+      // If no category is manually selected, use categorization service
+      if (!itemCategory) {
+        itemCategory = await CategorizationService.categorizeItem(name.trim());
+      } else {
+        // If category was manually selected, learn this categorization
+        await CategorizationService.learnItemCategorization(name.trim(), itemCategory);
+      }
+      
+      // Create new item with the determined category
       await addItem({
         name: name.trim(),
-        category, // This can be undefined and will be auto-detected
+        category: itemCategory,
         quantity: quantity ? parseInt(quantity, 10) : undefined,
         completed: false,
       });
