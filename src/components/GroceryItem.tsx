@@ -30,14 +30,16 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
 
   // Set up a timer to delete completed items after 10 seconds
   useEffect(() => {
-    let timerId: number | undefined;
+    let timerId: NodeJS.Timeout | undefined;
     
-    if (item.completed && !timeRemaining) {
+    if (item.completed && timeRemaining === null) {
+      // Initialize countdown when an item is first completed
       setTimeRemaining(10);
       
-      timerId = window.setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev === null || prev <= 0) {
+      timerId = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev === null || prev <= 1) {
+            // When timer reaches 0, clear interval and remove item
             clearInterval(timerId);
             removeItem(item.id);
             toast({
@@ -50,15 +52,16 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
           return prev - 1;
         });
       }, 1000);
-    } else if (!item.completed && timeRemaining !== null) {
+    } else if (!item.completed) {
       // If item is unchecked before timer completes, cancel the timer
       setTimeRemaining(null);
     }
     
+    // Cleanup function to clear the interval when component unmounts
     return () => {
       if (timerId) clearInterval(timerId);
     };
-  }, [item.completed, item.id, item.name, removeItem, timeRemaining, toast]);
+  }, [item.completed, item.id, item.name, removeItem, toast]);
 
   return (
     <div 
