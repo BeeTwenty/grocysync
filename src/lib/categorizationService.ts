@@ -4,23 +4,23 @@ import { CategoryType } from "@/types/grocery";
 // Food items mapped to their categories
 const foodCategoryMap: Record<string, CategoryType> = {
   // Produce items
-  apple: "produce",
-  banana: "produce",
-  orange: "produce",
-  grape: "produce",
-  lettuce: "produce",
-  tomato: "produce",
-  cucumber: "produce",
-  carrot: "produce",
-  broccoli: "produce",
-  spinach: "produce",
-  kale: "produce",
-  onion: "produce",
-  potato: "produce",
-  avocado: "produce",
-  strawberry: "produce",
-  blueberry: "produce",
-  raspberry: "produce",
+  apple: "fruit",
+  banana: "fruit",
+  orange: "fruit",
+  grape: "fruit",
+  lettuce: "vegetables",
+  tomato: "vegetables",
+  cucumber: "vegetables",
+  carrot: "vegetables",
+  broccoli: "vegetables",
+  spinach: "vegetables",
+  kale: "vegetables",
+  onion: "vegetables",
+  potato: "vegetables",
+  avocado: "vegetables",
+  strawberry: "fruit",
+  blueberry: "fruit",
+  raspberry: "fruit",
   
   // Dairy items
   milk: "dairy",
@@ -52,20 +52,20 @@ const foodCategoryMap: Record<string, CategoryType> = {
   croissant: "bakery",
   
   // Pantry
-  rice: "pantry",
-  pasta: "pantry",
-  cereal: "pantry",
-  flour: "pantry",
-  sugar: "pantry",
-  oil: "pantry",
-  vinegar: "pantry",
-  soup: "pantry",
-  sauce: "pantry",
-  beans: "pantry",
-  nuts: "pantry",
-  peanut: "pantry",
-  chips: "pantry",
-  snack: "pantry",
+  rice: "dry_goods",
+  pasta: "dry_goods",
+  cereal: "dry_goods",
+  flour: "dry_goods",
+  sugar: "dry_goods",
+  oil: "dry_goods",
+  vinegar: "dry_goods",
+  soup: "canned",
+  sauce: "sauce",
+  beans: "canned",
+  nuts: "snacks",
+  peanut: "snacks",
+  chips: "snacks",
+  snack: "snacks",
   
   // Frozen
   icecream: "frozen",
@@ -82,7 +82,7 @@ const foodCategoryMap: Record<string, CategoryType> = {
   trash: "household",
   bag: "household",
   
-  // Default to other
+  // Default to unknown
 };
 
 /**
@@ -107,9 +107,9 @@ export const CategorizationService = {
       }
     }
     
-    // Default to "other" if no match is found
-    console.log(`Could not categorize "${itemName}", defaulting to "other"`);
-    return "other";
+    // Default to "unknown" if no match is found
+    console.log(`Could not categorize "${itemName}", defaulting to "unknown"`);
+    return "unknown";
   },
   
   /**

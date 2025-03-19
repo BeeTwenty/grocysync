@@ -4,10 +4,10 @@ import { GroceryItem as GroceryItemType } from '@/types/grocery';
 import { CategoryDefinition } from '@/types/grocery';
 import GroceryItem from './GroceryItem';
 import { 
-  Apple, Home, Baby, Cookie, Snowflake, Glass, Cat, 
+  Apple, Home, Baby, Cookie, Snowflake, GlassWater, Cat, 
   Utensils, Package, ShoppingCart, Egg, Flame, Droplet, 
-  Package2, Milk, Pill, Drop, Drumstick, MoreHorizontal, 
-  Plant, Carrot, HelpCircle 
+  Package2, Milk, Pill, Drumstick, MoreHorizontal, 
+  Seedling, Carrot, HelpCircle, Cannabis 
 } from 'lucide-react';
 
 interface CategorySectionProps {
@@ -22,23 +22,36 @@ const categoryIcons: Record<string, React.FC<{ className?: string }>> = {
   'home': Home,
   'cookie': Cookie,
   'snowflake': Snowflake,
-  'glass': Glass,
+  'glass-cheers': GlassWater,  // Replaced Glass with GlassWater
+  'glass-water': GlassWater,
   'cat': Cat,
   'utensils': Utensils,
   'package': Package,
   'shopping-cart': ShoppingCart,
+  'basket-shopping': ShoppingCart,
   'egg': Egg,
   'flame': Flame,
+  'pepper-hot': Flame,
   'droplet': Droplet,
   'package-2': Package2,
   'milk': Milk,
+  'cow': Milk,
   'apple': Apple,
   'pill': Pill,
-  'drop': Drop,
+  'capsules': Pill,
+  'seedling': Seedling,
   'drumstick': Drumstick,
+  'drumstick-bite': Drumstick,
   'more-horizontal': MoreHorizontal,
-  'plant': Plant,
-  'carrot': Carrot
+  'cannabis': Cannabis, // Using Cannabis for Plant
+  'plant': Cannabis,
+  'carrot': Carrot,
+  'flour': Package,
+  'bread-slice': Cookie,
+  'can': Package,
+  'spoon': Utensils,
+  'kitchen-set': Utensils,
+  'pump-soap': Droplet
 };
 
 const CategorySection: React.FC<CategorySectionProps> = ({ category, items }) => {

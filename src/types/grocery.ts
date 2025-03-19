@@ -23,7 +23,10 @@ export type CategoryType =
   | 'meat'
   | 'misc'
   | 'herbs'
-  | 'vegetables';
+  | 'vegetables'
+  | 'produce'  // Added for categorization
+  | 'pantry'   // Added for categorization
+  | 'other';   // Added for categorization
 
 export interface GroceryItem {
   id: string;
