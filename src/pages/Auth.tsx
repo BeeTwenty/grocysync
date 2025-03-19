@@ -111,7 +111,7 @@ const Auth = () => {
     <div className="container max-w-md mx-auto py-12 px-4">
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Grocery List Admin</h1>
+          <h1 className="text-2xl font-bold">GrocySync</h1>
           <p className="text-muted-foreground mt-2">
             {isAdmin 
               ? "You're logged in as an admin" 
