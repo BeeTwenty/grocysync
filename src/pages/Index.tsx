@@ -6,6 +6,7 @@ import AddItemDialog from '@/components/AddItemDialog';
 import EmptyState from '@/components/EmptyState';
 import UnknownItemsTab from '@/components/UnknownItemsTab';
 import QuickAdd from '@/components/QuickAdd';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -86,6 +87,8 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-2">
+              <ThemeToggle />
+              
               {isSettingName ? (
                 <form onSubmit={handleNameChange} className="flex gap-2">
                   <Input 
