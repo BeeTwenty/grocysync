@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useGroceryStore, categories, getCategoryById } from '@/lib/groceryStore';
-import { GroceryItem } from '@/types/grocery';
+import { GroceryItem, CategoryType } from '@/types/grocery';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
@@ -13,7 +13,7 @@ const UnknownItemsTab: React.FC<UnknownItemsTabProps> = ({ items }) => {
   const { toggleItem, removeItem } = useGroceryStore();
   
   // Function to reassign an item to a different category
-  const reassignCategory = async (item: GroceryItem, newCategoryId: string) => {
+  const reassignCategory = async (item: GroceryItem, newCategoryId: CategoryType) => {
     // Remove the current item
     await removeItem(item.id);
     
@@ -52,7 +52,7 @@ const UnknownItemsTab: React.FC<UnknownItemsTabProps> = ({ items }) => {
               
               <div className="flex flex-col gap-2">
                 <Select 
-                  onValueChange={(value) => reassignCategory(item, value)}
+                  onValueChange={(value) => reassignCategory(item, value as CategoryType)}
                   defaultValue={item.category}
                 >
                   <SelectTrigger className="w-full">
