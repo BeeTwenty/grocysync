@@ -125,31 +125,31 @@ export const updateUserDisplayName = async (displayName: string) => {
 
 // Helper functions to manage user profiles
 export const createUserProfile = async (userId: string, email: string, displayName: string) => {
-  // Use raw queries since we can't directly use the database client
+  // Use RPC call with type assertion to fix TypeScript error
   return await supabase
     .rpc('create_profile', {
       user_id_param: userId,
       email_param: email,
       display_name_param: displayName
-    });
+    } as any);
 };
 
 export const upsertUserProfile = async (userId: string, email: string, displayName: string) => {
-  // Use raw queries since we can't directly use the database client
+  // Use RPC call with type assertion to fix TypeScript error
   return await supabase
     .rpc('upsert_profile', {
       user_id_param: userId,
       email_param: email,
       display_name_param: displayName
-    });
+    } as any);
 };
 
 export const getUserByDisplayName = async (displayName: string) => {
-  // Use a raw query to get user profile with display name
+  // Use RPC call with type assertion to fix TypeScript error
   const { data, error } = await supabase
     .rpc('get_profile_by_display_name', {
       display_name_param: displayName
-    });
+    } as any);
   
   return { data, error };
 };

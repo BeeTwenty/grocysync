@@ -138,6 +138,31 @@ export type Database = {
         }
         Returns: string
       }
+      create_profile: {
+        Args: {
+          user_id_param: string
+          email_param: string
+          display_name_param: string
+        }
+        Returns: undefined
+      }
+      get_profile_by_display_name: {
+        Args: {
+          display_name_param: string
+        }
+        Returns: {
+          user_id: string
+          email: string
+        }[]
+      }
+      upsert_profile: {
+        Args: {
+          user_id_param: string
+          email_param: string
+          display_name_param: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
