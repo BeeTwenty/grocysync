@@ -66,6 +66,15 @@ const foodCategoryMap: Record<string, CategoryType> = {
   peanut: "snacks",
   chips: "snacks",
   snack: "snacks",
+
+  // Beverages
+  water: "beverages",
+  juice: "beverages",
+  soda: "beverages",
+  coffee: "beverages",
+  tea: "beverages",
+  wine: "beverages",
+  beer: "beverages",
   
   // Frozen
   icecream: "frozen",
@@ -81,6 +90,7 @@ const foodCategoryMap: Record<string, CategoryType> = {
   cleaner: "household",
   trash: "household",
   bag: "household",
+  bags: "household",
   
   // Default to unknown
 };
@@ -96,13 +106,22 @@ export const CategorizationService = {
    * @returns The category ID for the item
    */
   categorizeItem(itemName: string): CategoryType {
-    // Convert to lowercase for easier matching
-    const nameLower = itemName.toLowerCase();
+    // Convert to lowercase for case-insensitive matching
+    const nameLower = itemName.toLowerCase().trim();
     
-    // Try to find a match from our mapping
+    // First try exact word matching in the item name
+    const words = nameLower.split(/\s+/);
+    for (const word of words) {
+      if (foodCategoryMap[word]) {
+        console.log(`Categorized "${itemName}" as "${foodCategoryMap[word]}" based on exact word "${word}"`);
+        return foodCategoryMap[word];
+      }
+    }
+    
+    // If no exact word match, try to find a keyword within the name
     for (const [keyword, category] of Object.entries(foodCategoryMap)) {
       if (nameLower.includes(keyword)) {
-        console.log(`Categorized "${itemName}" as "${category}" based on keyword "${keyword}"`);
+        console.log(`Categorized "${itemName}" as "${category}" based on included keyword "${keyword}"`);
         return category;
       }
     }
