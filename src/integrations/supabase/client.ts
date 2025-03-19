@@ -44,25 +44,30 @@ export const signIn = async (emailOrDisplayName: string, password: string) => {
   }
 
   // If email sign-in fails, check if it's a display name
-  // Get all users with this display name
-  const { data: userData, error: userError } = await supabase
-    .from('profiles')
-    .select('user_id, email')
-    .eq('display_name', emailOrDisplayName)
-    .single();
+  try {
+    // Manually query for profile with display name since we can't use from() yet
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('user_id, email')
+      .eq('display_name', emailOrDisplayName)
+      .single();
+  
+    // If no user found with this display name, return original error
+    if (userError || !userData) {
+      return { data: null, error: emailSignInError };
+    }
 
-  // If no user found with this display name, return original error
-  if (userError || !userData) {
+    // If we found a user with this display name, try to sign in with their email
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: userData.email,
+      password,
+    });
+
+    return { data, error };
+  } catch (error) {
+    console.error("Error in profile lookup:", error);
     return { data: null, error: emailSignInError };
   }
-
-  // If we found a user with this display name, try to sign in with their email
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: userData.email,
-    password,
-  });
-
-  return { data, error };
 };
 
 export const signOut = async () => {
@@ -120,33 +125,31 @@ export const updateUserDisplayName = async (displayName: string) => {
 
 // Helper functions to manage user profiles
 export const createUserProfile = async (userId: string, email: string, displayName: string) => {
+  // Use raw queries since we can't directly use the database client
   return await supabase
-    .from('profiles')
-    .insert({
-      user_id: userId,
-      email,
-      display_name: displayName,
+    .rpc('create_profile', {
+      user_id_param: userId,
+      email_param: email,
+      display_name_param: displayName
     });
 };
 
 export const upsertUserProfile = async (userId: string, email: string, displayName: string) => {
+  // Use raw queries since we can't directly use the database client
   return await supabase
-    .from('profiles')
-    .upsert({
-      user_id: userId,
-      email,
-      display_name: displayName,
-    }, {
-      onConflict: 'user_id'
+    .rpc('upsert_profile', {
+      user_id_param: userId,
+      email_param: email,
+      display_name_param: displayName
     });
 };
 
 export const getUserByDisplayName = async (displayName: string) => {
+  // Use a raw query to get user profile with display name
   const { data, error } = await supabase
-    .from('profiles')
-    .select('user_id, email')
-    .eq('display_name', displayName)
-    .single();
+    .rpc('get_profile_by_display_name', {
+      display_name_param: displayName
+    });
   
   return { data, error };
 };
