@@ -135,7 +135,7 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
                 </button>
                 
                 <span className="text-sm px-1 min-w-6 text-center">
-                  {item.quantity || 1} {item.unit || 'x'}
+                  {item.quantity || 1}
                 </span>
                 
                 <button 
@@ -151,7 +151,7 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
             {/* For completed items, just show the quantity */}
             {item.completed && item.quantity && item.quantity > 0 && (
               <span className="ml-2 text-sm bg-white/70 text-foreground px-2 py-0.5 rounded-full">
-                {item.quantity} {item.unit || 'x'}
+                {item.quantity}
               </span>
             )}
           </div>

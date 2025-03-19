@@ -21,7 +21,6 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
   const [name, setName] = useState('');
   const [category, setCategory] = useState<CategoryType | undefined>(undefined);
   const [quantity, setQuantity] = useState('1');
-  const [unit, setUnit] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,7 +39,6 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
         name: name.trim(),
         category, // This can be undefined and will be auto-detected
         quantity: quantity ? parseInt(quantity, 10) : undefined,
-        unit: unit.trim() || undefined,
         completed: false,
       });
       
@@ -59,7 +57,6 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
     setName('');
     setCategory(undefined);
     setQuantity('1');
-    setUnit('');
   };
 
   return (
@@ -104,30 +101,17 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({ isOpen, onOpenChange }) =
             </Select>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="quantity">Quantity</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                placeholder="1"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="glass border-none"
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="unit">Unit (optional)</Label>
-              <Input
-                id="unit"
-                placeholder="lb, oz, pack..."
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                className="glass border-none"
-              />
-            </div>
+          <div className="grid gap-2">
+            <Label htmlFor="quantity">Quantity</Label>
+            <Input
+              id="quantity"
+              type="number"
+              min="1"
+              placeholder="1"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              className="glass border-none"
+            />
           </div>
           
           <DialogFooter className="pt-2">

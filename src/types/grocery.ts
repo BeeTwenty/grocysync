@@ -34,7 +34,7 @@ export interface GroceryItem {
   category: CategoryType;
   completed: boolean;
   quantity?: number;
-  unit?: string;
+  unit?: string; // Kept for backward compatibility but not used in UI
   addedBy: string;
   addedAt: Date;
   completedBy?: string;
