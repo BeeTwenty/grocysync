@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Trash2, Plus, Minus } from 'lucide-react';
 import { useGroceryStore } from '@/lib/groceryStore';
 import { GroceryItem as GroceryItemType } from '@/types/grocery';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface GroceryItemProps {
   item: GroceryItemType;
@@ -12,7 +13,9 @@ interface GroceryItemProps {
 
 const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
   const { toggleItem, removeItem } = useGroceryStore();
-  const [isHovered, setIsHovered] = React.useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const { toast } = useToast();
   
   // Format the added time as relative time (e.g., "2 hours ago")
   const getRelativeTime = (date: Date) => {
@@ -24,6 +27,38 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
+
+  // Set up a timer to delete completed items after 10 seconds
+  useEffect(() => {
+    let timerId: number | undefined;
+    
+    if (item.completed && !timeRemaining) {
+      setTimeRemaining(10);
+      
+      timerId = window.setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev === null || prev <= 0) {
+            clearInterval(timerId);
+            removeItem(item.id);
+            toast({
+              title: "Item Removed",
+              description: `${item.name} has been automatically removed from your list.`,
+              duration: 3000,
+            });
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else if (!item.completed && timeRemaining !== null) {
+      // If item is unchecked before timer completes, cancel the timer
+      setTimeRemaining(null);
+    }
+    
+    return () => {
+      if (timerId) clearInterval(timerId);
+    };
+  }, [item.completed, item.id, item.name, removeItem, timeRemaining, toast]);
 
   return (
     <div 
@@ -72,6 +107,11 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
           {item.completed && item.completedBy && item.completedAt && (
             <p className="text-xs text-muted-foreground">
               Purchased by {item.completedBy} {getRelativeTime(item.completedAt)}
+              {timeRemaining !== null && (
+                <span className="ml-2 text-red-500 font-medium">
+                  Removing in {timeRemaining}s
+                </span>
+              )}
             </p>
           )}
         </div>
