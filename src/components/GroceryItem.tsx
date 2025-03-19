@@ -5,6 +5,7 @@ import { useGroceryStore } from '@/lib/groceryStore';
 import { GroceryItem as GroceryItemType } from '@/types/grocery';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface GroceryItemProps {
   item: GroceryItemType;
@@ -12,10 +13,11 @@ interface GroceryItemProps {
 }
 
 const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
-  const { toggleItem, removeItem } = useGroceryStore();
+  const { toggleItem, removeItem, updateItemQuantity } = useGroceryStore();
   const [isHovered, setIsHovered] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   // Format the added time as relative time (e.g., "2 hours ago")
   const getRelativeTime = (date: Date) => {
@@ -63,6 +65,15 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
     };
   }, [item.completed, item.id, item.name, removeItem, toast]);
 
+  // Handle quantity adjustment
+  const handleQuantityChange = (increment: boolean) => {
+    const newQuantity = increment 
+      ? (item.quantity || 1) + 1 
+      : Math.max(1, (item.quantity || 1) - 1);
+    
+    updateItemQuantity(item.id, newQuantity);
+  };
+
   return (
     <div 
       className={cn(
@@ -96,7 +107,33 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
               {item.name}
             </p>
             
-            {(item.quantity && item.quantity > 0) && (
+            {/* Quantity controls and display */}
+            {!item.completed && (
+              <div className="flex items-center gap-1 ml-2 bg-white/70 text-foreground rounded-full">
+                <button 
+                  onClick={() => handleQuantityChange(false)}
+                  className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
+                  aria-label="Decrease quantity"
+                >
+                  <Minus className="h-3 w-3" />
+                </button>
+                
+                <span className="text-sm px-1">
+                  {item.quantity || 1} {item.unit || 'x'}
+                </span>
+                
+                <button 
+                  onClick={() => handleQuantityChange(true)}
+                  className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
+                  aria-label="Increase quantity"
+                >
+                  <Plus className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+            
+            {/* For completed items, just show the quantity */}
+            {item.completed && item.quantity && item.quantity > 0 && (
               <span className="ml-2 text-sm bg-white/70 text-foreground px-2 py-0.5 rounded-full">
                 {item.quantity} {item.unit || 'x'}
               </span>
@@ -120,11 +157,11 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
         </div>
       </div>
 
-      {/* Actions that appear on hover */}
+      {/* Actions that appear on hover or always visible on mobile */}
       <div 
         className={cn(
           "absolute right-2 top-2 flex space-x-1 transition-opacity",
-          isHovered ? "opacity-100" : "opacity-0"
+          (isHovered || isMobile) ? "opacity-100" : "opacity-0"
         )}
       >
         <button 

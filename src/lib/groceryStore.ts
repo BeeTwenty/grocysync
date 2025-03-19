@@ -66,6 +66,7 @@ interface GroceryState {
   addItem: (item: Omit<GroceryItem, 'id' | 'addedBy' | 'addedAt' | 'category'> & { category?: CategoryType }) => Promise<void>;
   toggleItem: (id: string) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
+  updateItemQuantity: (id: string, quantity: number) => Promise<void>;
   setUserName: (name: string) => Promise<void>;
 }
 
@@ -241,6 +242,30 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
       } catch (error) {
         console.error('Error removing item:', error);
         toast.error('Failed to remove item from your grocery list');
+      }
+    },
+    
+    updateItemQuantity: async (id, quantity) => {
+      try {
+        const item = get().items.find(item => item.id === id);
+        
+        if (!item) {
+          throw new Error('Item not found');
+        }
+        
+        const { error } = await supabase
+          .from('items')
+          .update({ quantity })
+          .eq('id', id);
+          
+        if (error) {
+          throw error;
+        }
+        
+        // The fetchItems will be triggered automatically by the realtime subscription
+      } catch (error) {
+        console.error('Error updating item quantity:', error);
+        toast.error('Failed to update item quantity');
       }
     },
     
