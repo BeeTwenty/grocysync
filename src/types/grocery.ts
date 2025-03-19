@@ -1,13 +1,29 @@
 
 export type CategoryType = 
-  | 'produce'
-  | 'dairy'
-  | 'meat'
-  | 'bakery'
-  | 'pantry'
-  | 'frozen'
+  | 'unknown'
+  | 'baby'
   | 'household'
-  | 'other';
+  | 'snacks'
+  | 'frozen'
+  | 'beverages'
+  | 'pets'
+  | 'utensils'
+  | 'canned'
+  | 'checkout'
+  | 'easter'
+  | 'spices'
+  | 'hygiene'
+  | 'dry_goods'
+  | 'bakery'
+  | 'dairy'
+  | 'fruit'
+  | 'supplements'
+  | 'spreads'
+  | 'sauce'
+  | 'meat'
+  | 'misc'
+  | 'herbs'
+  | 'vegetables';
 
 export interface GroceryItem {
   id: string;
