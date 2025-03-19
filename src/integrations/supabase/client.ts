@@ -45,6 +45,8 @@ export const signIn = async (emailOrDisplayName: string, password: string) => {
 
   // If email sign-in fails, check if it's a display name
   try {
+    console.log('Trying to sign in with display name:', emailOrDisplayName);
+    
     // Query for profile with display name
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
@@ -52,20 +54,36 @@ export const signIn = async (emailOrDisplayName: string, password: string) => {
       .eq('display_name', emailOrDisplayName);
   
     // If no user found with this display name or error occurred, return original error
-    if (profileError || !profiles || profiles.length === 0) {
+    if (profileError) {
+      console.error('Error querying profiles:', profileError);
+      return { data: null, error: emailSignInError };
+    }
+    
+    if (!profiles || profiles.length === 0) {
       console.log('No profile found for display name:', emailOrDisplayName);
       return { data: null, error: emailSignInError };
     }
 
     // Get the first matching profile
     const userData = profiles[0];
-    console.log('Found profile:', userData);
+    console.log('Found profile for display name:', userData);
+
+    if (!userData.email) {
+      console.error('No email found for user with display name:', emailOrDisplayName);
+      return { data: null, error: emailSignInError };
+    }
 
     // If we found a user with this display name, try to sign in with their email
     const { data, error } = await supabase.auth.signInWithPassword({
       email: userData.email,
       password,
     });
+
+    if (error) {
+      console.error('Error signing in with email from display name:', error);
+    } else {
+      console.log('Successfully signed in with display name');
+    }
 
     return { data, error };
   } catch (error) {

@@ -178,7 +178,7 @@ const Auth = () => {
         {!isAdmin ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-1">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
+              <TabsTrigger value="login">Login</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login" className="mt-4">
@@ -225,7 +225,7 @@ const Auth = () => {
                     disabled={loading}
                   >
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sign In
+                    Login
                   </Button>
                 </form>
               </Form>
