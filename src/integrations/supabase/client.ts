@@ -129,6 +129,7 @@ export const updateUserDisplayName = async (displayName: string) => {
 
 // Helper functions to manage user profiles
 export const createUserProfile = async (userId: string, email: string, displayName: string) => {
+  console.log('Creating profile for:', userId, email, displayName);
   // Use RPC call with type assertion to fix TypeScript error
   return await supabase
     .rpc('create_profile', {
@@ -139,6 +140,7 @@ export const createUserProfile = async (userId: string, email: string, displayNa
 };
 
 export const upsertUserProfile = async (userId: string, email: string, displayName: string) => {
+  console.log('Upserting profile for:', userId, email, displayName);
   // Use RPC call with type assertion to fix TypeScript error
   return await supabase
     .rpc('upsert_profile', {

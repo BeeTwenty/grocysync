@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signIn, getCurrentUser, isUserAdmin, createUserByAdmin, updateUserDisplayName } from '@/integrations/supabase/client';
+import { signIn, getCurrentUser, isUserAdmin, createUserByAdmin, updateUserDisplayName, upsertUserProfile } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,7 +85,7 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      const { error } = await signIn(values.emailOrDisplayName, values.password);
+      const { error, data } = await signIn(values.emailOrDisplayName, values.password);
       
       if (error) {
         toast.error(error.message);
@@ -98,6 +98,20 @@ const Auth = () => {
           toast.success('Logged in as admin');
         } else {
           toast.success('Logged in successfully');
+          
+          // Create or update profile if it doesn't exist
+          if (data && data.user) {
+            try {
+              // Use user email as display name if none was provided (first-time login)
+              const displayName = data.user.user_metadata?.name || values.emailOrDisplayName;
+              
+              // Update or create profile
+              await upsertUserProfile(data.user.id, data.user.email || '', displayName);
+            } catch (profileError) {
+              console.error('Error creating/updating profile:', profileError);
+            }
+          }
+          
           navigate('/');
         }
       }
