@@ -1,25 +1,64 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signIn, getCurrentUser, isUserAdmin, createUserByAdmin } from '@/integrations/supabase/client';
+import { signIn, getCurrentUser, isUserAdmin, createUserByAdmin, updateUserDisplayName } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Loader2, ShieldCheck, UserPlus } from 'lucide-react';
+import { Loader2, ShieldCheck, UserPlus, UserRound } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage 
+} from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+
+// Form validation schemas
+const loginSchema = z.object({
+  emailOrDisplayName: z.string().min(1, { message: 'Email or display name is required' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+});
+
+const createUserSchema = z.object({
+  newEmail: z.string().email({ message: 'Please enter a valid email' }),
+  displayName: z.string().min(2, { message: 'Display name must be at least 2 characters' }),
+  newPassword: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+});
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [adminLoading, setAdminLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('login');
+
+  // Login form
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      emailOrDisplayName: '',
+      password: '',
+    },
+  });
+
+  // Create user form
+  const createUserForm = useForm<z.infer<typeof createUserSchema>>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      newEmail: '',
+      displayName: '',
+      newPassword: '',
+    },
+  });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -42,12 +81,11 @@ const Auth = () => {
     checkAuth();
   }, [navigate]);
   
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     setLoading(true);
     
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(values.emailOrDisplayName, values.password);
       
       if (error) {
         toast.error(error.message);
@@ -71,8 +109,7 @@ const Auth = () => {
     }
   };
   
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateUser = async (values: z.infer<typeof createUserSchema>) => {
     setCreatingUser(true);
     
     try {
@@ -82,15 +119,18 @@ const Auth = () => {
         return;
       }
       
-      const { error } = await createUserByAdmin(newEmail, newPassword, 'user', displayName);
+      const { error } = await createUserByAdmin(
+        values.newEmail, 
+        values.newPassword, 
+        'user', 
+        values.displayName
+      );
       
       if (error) {
         toast.error(error.message);
       } else {
         toast.success('User created successfully');
-        setNewEmail('');
-        setNewPassword('');
-        setDisplayName('');
+        createUserForm.reset();
         setShowCreateUser(false);
       }
     } catch (error) {
@@ -122,40 +162,61 @@ const Auth = () => {
         </div>
         
         {!isAdmin ? (
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@example.com"
-                required
-              />
-            </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-1">
+              <TabsTrigger value="login">Sign In</TabsTrigger>
+            </TabsList>
             
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={loading}
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
-            </Button>
-          </form>
+            <TabsContent value="login" className="mt-4">
+              <Form {...loginForm}>
+                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+                  <FormField
+                    control={loginForm.control}
+                    name="emailOrDisplayName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email or Display Name</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter your email or display name" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={loginForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="••••••••" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Sign In
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
+          </Tabs>
         ) : (
           <div className="space-y-6">
             <div className="flex items-center justify-center bg-secondary/50 p-4 rounded-lg">
@@ -172,61 +233,80 @@ const Auth = () => {
                 Create New User
               </Button>
             ) : (
-              <form onSubmit={handleCreateUser} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="newEmail">New User Email</Label>
-                  <Input
-                    id="newEmail"
-                    type="email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="user@example.com"
-                    required
+              <Form {...createUserForm}>
+                <form onSubmit={createUserForm.handleSubmit(handleCreateUser)} className="space-y-4">
+                  <FormField
+                    control={createUserForm.control}
+                    name="newEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New User Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="user@example.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">Display Name</Label>
-                  <Input
-                    id="displayName"
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="John Doe"
+                  
+                  <FormField
+                    control={createUserForm.control}
+                    name="displayName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Display Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="John Doe"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">New User Password</Label>
-                  <Input
-                    id="newPassword"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
+                  
+                  <FormField
+                    control={createUserForm.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New User Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="flex space-x-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="flex-1"
-                    onClick={() => setShowCreateUser(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    className="flex-1"
-                    disabled={creatingUser}
-                  >
-                    {creatingUser && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create User
-                  </Button>
-                </div>
-              </form>
+                  
+                  <div className="flex space-x-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => setShowCreateUser(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      className="flex-1"
+                      disabled={creatingUser}
+                    >
+                      {creatingUser && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Create User
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             )}
             
             <Button 
