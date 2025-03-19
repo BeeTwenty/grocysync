@@ -7,7 +7,7 @@ import {
   Apple, Home, Baby, Cookie, Snowflake, GlassWater, Cat, 
   Utensils, Package, ShoppingCart, Egg, Flame, Droplet, 
   Package2, Milk, Pill, Drumstick, MoreHorizontal, 
-  Seedling, Carrot, HelpCircle, Cannabis 
+  Leaf, Carrot, HelpCircle, Cannabis 
 } from 'lucide-react';
 
 interface CategorySectionProps {
@@ -39,7 +39,7 @@ const categoryIcons: Record<string, React.FC<{ className?: string }>> = {
   'apple': Apple,
   'pill': Pill,
   'capsules': Pill,
-  'seedling': Seedling,
+  'seedling': Leaf,  // Replacing Seedling with Leaf icon
   'drumstick': Drumstick,
   'drumstick-bite': Drumstick,
   'more-horizontal': MoreHorizontal,
