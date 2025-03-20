@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -74,6 +73,15 @@ export const AuthService = {
     } catch (error) {
       console.error('Login error:', error);
       throw error;
+    }
+  },
+  
+  getCurrentUser: async () => {
+    try {
+      return await authFetch('/profiles/me');
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      return null;
     }
   },
   

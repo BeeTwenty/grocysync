@@ -10,6 +10,8 @@ import { ItemsService, CategoriesService } from '@/services/api';
 // Export categories for backward compatibility
 export { categories };
 export { setUserName } from './store/userProfile';
+// Export getCategoryById function from categories
+export { getCategoryById } from './store/categories';
 
 // Setup websocket for real-time updates
 let socket: WebSocket | null = null;

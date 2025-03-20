@@ -29,8 +29,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         if (AuthService.isAuthenticated()) {
           // Get user profile
-          const profile = await AuthService.signIn; // This will automatically redirect if token is invalid
-          setUser(profile.user);
+          const profile = await AuthService.getCurrentUser(); // Fixed: using getCurrentUser method instead of signIn
+          if (profile) {
+            setUser(profile.user);
+          }
         }
       } catch (error) {
         console.error('Auth status check error:', error);
