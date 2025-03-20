@@ -40,47 +40,14 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
-  // Initialize timer when component mounts or item completion status changes
+  // Initialize timer when item is completed
   useEffect(() => {
-    // Only manage the timer for completed items
-    if (item.completed) {
-      // If no timer is running, start one
-      if (timeRemaining === null) {
-        setTimeRemaining(10);
-        
-        // Clear any existing timer first
-        if (timerIdRef.current) {
-          clearInterval(timerIdRef.current);
-        }
-        
-        // Start a new timer
-        timerIdRef.current = setInterval(() => {
-          setTimeRemaining((prev) => {
-            if (prev === null || prev <= 1) {
-              // Clear the interval
-              if (timerIdRef.current) {
-                clearInterval(timerIdRef.current);
-                timerIdRef.current = null;
-              }
-              
-              // Use setTimeout to avoid state updates during render
-              setTimeout(() => {
-                removeItem(item.id);
-                toast({
-                  title: "Item Removed",
-                  description: `${item.name} has been automatically removed from your list.`,
-                  duration: 3000
-                });
-              }, 10);
-              
-              return null;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      }
-    } else {
-      // If item is not completed, clear any running timer
+    // Initial setup - only start a timer if the item is completed and we don't have a timer already
+    if (item.completed && timeRemaining === null) {
+      // Initialize the countdown
+      setTimeRemaining(10);
+    } else if (!item.completed) {
+      // Clear the timer if item is uncompleted
       if (timerIdRef.current) {
         clearInterval(timerIdRef.current);
         timerIdRef.current = null;
@@ -88,14 +55,57 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
       setTimeRemaining(null);
     }
 
-    // Cleanup function to clear interval when component unmounts
+    // Cleanup when component unmounts
     return () => {
       if (timerIdRef.current) {
         clearInterval(timerIdRef.current);
         timerIdRef.current = null;
       }
     };
-  }, [item.completed]); // Only depend on the completion status, not the timeRemaining
+  }, [item.completed, item.id]); // Only depend on completion status and item.id
+
+  // Separate effect for the actual countdown timer
+  useEffect(() => {
+    // Only run the timer if we have a timeRemaining value
+    if (timeRemaining !== null && item.completed) {
+      // Clear any existing timer before setting a new one
+      if (timerIdRef.current) {
+        clearInterval(timerIdRef.current);
+      }
+      
+      // Start the countdown
+      timerIdRef.current = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev !== null && prev <= 1) {
+            // Clear the interval when time is up
+            if (timerIdRef.current) {
+              clearInterval(timerIdRef.current);
+              timerIdRef.current = null;
+            }
+            
+            // Remove the item
+            removeItem(item.id);
+            toast({
+              title: "Item Removed",
+              description: `${item.name} has been automatically removed from your list.`,
+              duration: 3000
+            });
+            
+            return null;
+          }
+          return prev !== null ? prev - 1 : null;
+        });
+      }, 1000);
+    }
+    
+    // Cleanup this effect
+    return () => {
+      if (timerIdRef.current) {
+        clearInterval(timerIdRef.current);
+        timerIdRef.current = null;
+      }
+    };
+  }, [timeRemaining, item.completed, item.id, item.name, removeItem, toast]);
 
   const handleTouchStart = () => {
     if (isMobile) {
