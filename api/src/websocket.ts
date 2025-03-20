@@ -9,10 +9,10 @@ export const setupWebsocket = (server: http.Server, app: Express) => {
   // Create WebSocket server
   wss = new WebSocket.Server({ server });
   
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws: WebSocket) => {
     console.log('WebSocket client connected');
     
-    ws.on('message', (message) => {
+    ws.on('message', (message: WebSocket.RawData) => {
       console.log('Received message:', message);
     });
     
@@ -25,7 +25,7 @@ export const setupWebsocket = (server: http.Server, app: Express) => {
   
   // Add WebSocket broadcast function to app for use in routes
   app.set('wsBroadcast', (data: any) => {
-    wss.clients.forEach((client) => {
+    wss.clients.forEach((client: WebSocket) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(data));
       }
