@@ -155,6 +155,13 @@ export type Database = {
           email: string
         }[]
       }
+      update_user_display_name: {
+        Args: {
+          user_id_param: string
+          display_name_param: string
+        }
+        Returns: undefined
+      }
       upsert_profile: {
         Args: {
           user_id_param: string
