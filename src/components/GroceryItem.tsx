@@ -40,44 +40,51 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
-  // Initialize timer when item is marked as completed
+  // Initialize timer when component mounts or item completion status changes
   useEffect(() => {
-    // Clear any existing timer
-    if (timerIdRef.current) {
-      clearInterval(timerIdRef.current);
-      timerIdRef.current = null;
-    }
-    
-    // Only start a new timer if the item is completed and we don't already have a timer running
-    if (item.completed && timeRemaining === null) {
-      setTimeRemaining(10);
-      
-      timerIdRef.current = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev === null || prev <= 1) {
-            if (timerIdRef.current) {
-              clearInterval(timerIdRef.current);
-              timerIdRef.current = null;
+    // Only manage the timer for completed items
+    if (item.completed) {
+      // If no timer is running, start one
+      if (timeRemaining === null) {
+        setTimeRemaining(10);
+        
+        // Clear any existing timer first
+        if (timerIdRef.current) {
+          clearInterval(timerIdRef.current);
+        }
+        
+        // Start a new timer
+        timerIdRef.current = setInterval(() => {
+          setTimeRemaining((prev) => {
+            if (prev === null || prev <= 1) {
+              // Clear the interval
+              if (timerIdRef.current) {
+                clearInterval(timerIdRef.current);
+                timerIdRef.current = null;
+              }
+              
+              // Use setTimeout to avoid state updates during render
+              setTimeout(() => {
+                removeItem(item.id);
+                toast({
+                  title: "Item Removed",
+                  description: `${item.name} has been automatically removed from your list.`,
+                  duration: 3000
+                });
+              }, 10);
+              
+              return null;
             }
-            
-            // Use a setTimeout to ensure the state update happens separately 
-            // from the render cycle
-            setTimeout(() => {
-              removeItem(item.id);
-              toast({
-                title: "Item Removed",
-                description: `${item.name} has been automatically removed from your list.`,
-                duration: 3000
-              });
-            }, 0);
-            
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else if (!item.completed) {
-      // Reset the timer if the item is uncompleted
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    } else {
+      // If item is not completed, clear any running timer
+      if (timerIdRef.current) {
+        clearInterval(timerIdRef.current);
+        timerIdRef.current = null;
+      }
       setTimeRemaining(null);
     }
 
@@ -88,7 +95,7 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
         timerIdRef.current = null;
       }
     };
-  }, [item.completed, item.id, item.name, removeItem, toast]);
+  }, [item.completed]); // Only depend on the completion status, not the timeRemaining
 
   const handleTouchStart = () => {
     if (isMobile) {
