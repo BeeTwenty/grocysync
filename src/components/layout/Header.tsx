@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { UserRound, LogOut } from 'lucide-react';
+import { ShoppingCart, UserRound, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -45,7 +45,8 @@ const Header = () => {
       <div className="container mx-auto py-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <img src="/icons/grocysync-logo.png" alt="GrocySync" className="h-8" />
+            <ShoppingCart className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-medium">GrocySync</h1>
           </div>
           
           <div className="flex items-center gap-3 md:gap-2">
