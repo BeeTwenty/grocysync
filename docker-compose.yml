@@ -1,0 +1,45 @@
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: grocysync
+      POSTGRES_PASSWORD: grocysync_password
+      POSTGRES_DB: grocysync
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://grocysync:grocysync_password@postgres:5432/grocysync
+      JWT_SECRET: your_jwt_secret_here
+      PORT: 3001
+    ports:
+      - "3001:3001"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+    environment:
+      VITE_API_URL: http://localhost:3001
+
+volumes:
+  postgres_data:

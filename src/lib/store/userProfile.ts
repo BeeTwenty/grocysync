@@ -1,27 +1,33 @@
 
-import { getUserDisplayName, updateUserDisplayName } from '@/integrations/supabase/client';
+import { ProfileService } from '@/services/api';
 import { toast } from 'sonner';
 
-// Get current user from Supabase
+// Get current user from API
 export const getCurrentUser = async () => {
-  const displayName = await getUserDisplayName();
-  return {
-    id: 'user1',
-    name: displayName || 'You'
-  };
+  try {
+    const profile = await ProfileService.getCurrentUser();
+    return {
+      id: profile.user_id,
+      name: profile.display_name
+    };
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return {
+      id: 'user1',
+      name: 'You'
+    };
+  }
 };
 
-// Updated to use the proper authentication update method
+// Updated to use the proper API method
 export const setUserName = async (name: string) => {
-  // Use the updateUserDisplayName function from the client
-  const { data, error } = await updateUserDisplayName(name);
-  
-  if (error) {
+  try {
+    await ProfileService.updateDisplayName(name);
+    toast.success('Display name updated successfully');
+    return true;
+  } catch (error) {
     toast.error('Failed to update display name');
     console.error('Error updating display name:', error);
     return false;
   }
-  
-  toast.success('Display name updated successfully');
-  return true;
 };

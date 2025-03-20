@@ -1,69 +1,89 @@
-# Welcome to your Lovable project
 
-## Project info
+# GrocySync Self-Hosted
 
-**URL**: https://lovable.dev/projects/c03d9f8d-56e4-4813-920b-df5260e1572a
+This is a self-hosted version of GrocySync, a collaborative grocery list app.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- Create and manage grocery lists
+- Automatically categorize items
+- Collaborative real-time updates
+- User authentication
+- Profile management
 
-**Use Lovable**
+## Requirements
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c03d9f8d-56e4-4813-920b-df5260e1572a) and start prompting.
+- Docker and Docker Compose
+- Node.js 18+ (for development)
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+### Running with Docker Compose
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Clone this repository
+2. Create a `.env` file based on `.env.example`
+3. Generate a secure JWT secret and update in `.env`
+4. Start the containers:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```bash
+docker-compose up -d
+```
 
-Follow these steps:
+5. Access the application at http://localhost:8080
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Development Setup
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. Clone this repository
+2. Install dependencies for the main app:
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+npm install
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. Install dependencies for the API:
+
+```bash
+cd api && npm install
+```
+
+4. Set up PostgreSQL database and update the `.env` file
+5. Run the database migrations:
+
+```bash
+cd api && npm run migrate
+```
+
+6. Start the API in development mode:
+
+```bash
+cd api && npm run dev
+```
+
+7. Start the frontend in development mode:
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+8. Access the application at http://localhost:5173
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Database Migration
 
-**Use GitHub Codespaces**
+The application includes migration scripts to help you migrate your data from Supabase to a self-hosted PostgreSQL database. To migrate your existing data:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Export your data from Supabase (either through the UI or using their CLI)
+2. Update the `.env` file with your database connection details
+3. Import your data using the appropriate migration scripts in the `migrations` folder
 
-## What technologies are used for this project?
+## Production Deployment
 
-This project is built with .
+When deploying to production:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. Change the default passwords in `docker-compose.yml`
+2. Generate a secure JWT secret for authentication
+3. Set up a proper reverse proxy (like Nginx or Traefik) with SSL
+4. Configure proper backups for your PostgreSQL database
 
-## How can I deploy this project?
+## License
 
-Simply open [Lovable](https://lovable.dev/projects/c03d9f8d-56e4-4813-920b-df5260e1572a) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+MIT

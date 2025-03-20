@@ -1,41 +1,82 @@
 
 import { create } from 'zustand';
 import { GroceryItem, CategoryType } from '../types/grocery';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { GroceryState } from './store/types';
-import { categories, getCategoryById } from './store/categories';
+import { categories } from './store/categories';
 import { getCurrentUser, setUserName as updateUserName } from './store/userProfile';
-import { fetchItemsFromDB, setupRealtimeSubscription, transformDatabaseItem } from './store/itemOperations';
+import { ItemsService, CategoriesService } from '@/services/api';
 
-// Export categories and getCategoryById for backward compatibility
-export { categories, getCategoryById };
+// Export categories for backward compatibility
+export { categories };
 export { setUserName } from './store/userProfile';
 
+// Setup websocket for real-time updates
+let socket: WebSocket | null = null;
+
+const setupWebsocket = (onMessage: (data: any) => void) => {
+  const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3001/ws';
+  
+  if (socket !== null) {
+    return () => {
+      if (socket) {
+        socket.close();
+        socket = null;
+      }
+    };
+  }
+  
+  socket = new WebSocket(wsUrl);
+  
+  socket.onopen = () => {
+    console.log('WebSocket connection established');
+  };
+  
+  socket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      onMessage(data);
+    } catch (error) {
+      console.error('Error parsing WebSocket message:', error);
+    }
+  };
+  
+  socket.onerror = (error) => {
+    console.error('WebSocket error:', error);
+  };
+  
+  socket.onclose = () => {
+    console.log('WebSocket connection closed');
+    // Optional: attempt to reconnect
+  };
+  
+  return () => {
+    if (socket) {
+      socket.close();
+      socket = null;
+    }
+  };
+};
+
 export const useGroceryStore = create<GroceryState>((set, get) => {
-  // Set up realtime subscription when the store is created
-  const cleanup = setupRealtimeSubscription(
-    // Handle INSERT
-    (newItem) => {
+  // Set up websocket connection for real-time updates
+  const cleanup = setupWebsocket((data) => {
+    if (data.type === 'INSERT') {
       set((state) => ({
-        items: [newItem, ...state.items]
+        items: [data.item, ...state.items]
       }));
-    },
-    // Handle UPDATE
-    (updatedItem) => {
+    } else if (data.type === 'UPDATE') {
       set((state) => ({
         items: state.items.map(item => 
-          item.id === updatedItem.id ? updatedItem : item
+          item.id === data.item.id ? data.item : item
         )
       }));
-    },
-    // Handle DELETE
-    (id) => {
+    } else if (data.type === 'DELETE') {
       set((state) => ({
-        items: state.items.filter(item => item.id !== id)
+        items: state.items.filter(item => item.id !== data.id)
       }));
     }
-  );
+  });
 
   return {
     items: [],
@@ -47,8 +88,23 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
       set({ isLoading: true, error: null });
       
       try {
-        const items = await fetchItemsFromDB();
-        set({ items, isLoading: false });
+        const items = await ItemsService.getItems();
+        
+        // Transform items to match our app format
+        const transformedItems = items.map((item: any): GroceryItem => ({
+          id: item.id,
+          name: item.name,
+          category: item.category as CategoryType,
+          completed: item.completed,
+          quantity: item.quantity || undefined,
+          unit: item.unit || undefined,
+          addedBy: item.added_by,
+          addedAt: new Date(item.added_at),
+          completedBy: item.completed_by || undefined,
+          completedAt: item.completed_at ? new Date(item.completed_at) : undefined
+        }));
+        
+        set({ items: transformedItems, isLoading: false });
       } catch (error) {
         console.error('Error fetching items:', error);
         set({ 
@@ -72,40 +128,23 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
       try {
         const { name, completed, quantity, unit } = itemData;
         
-        // Use provided category or let Supabase auto-categorize
+        // Use provided category or auto-categorize
         let category = itemData.category;
         
         if (!category) {
-          // Call the database function to categorize the item
-          const { data, error: funcError } = await supabase
-            .rpc('categorize_item', { item_name: name });
-            
-          if (funcError) {
-            throw funcError;
-          }
-          
-          category = data as CategoryType;
+          // Call the API to categorize the item
+          category = await CategoriesService.categorizeItem(name);
         }
         
         // Insert the new item
-        const { data: newItem, error } = await supabase
-          .from('items')
-          .insert({
-            name,
-            category,
-            completed: completed || false,
-            quantity,
-            unit,
-            added_by: get().currentUser.name
-          })
-          .select()
-          .single();
-          
-        if (error) {
-          throw error;
-        }
+        await ItemsService.addItem({
+          name,
+          category,
+          completed: completed || false,
+          quantity,
+          unit
+        });
         
-        // The fetchItems will be triggered automatically by the realtime subscription
         toast.success(`Added ${name} to your grocery list`);
       } catch (error) {
         console.error('Error adding item:', error);
@@ -115,28 +154,7 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
     
     toggleItem: async (id) => {
       try {
-        const item = get().items.find(item => item.id === id);
-        
-        if (!item) {
-          throw new Error('Item not found');
-        }
-        
-        const completed = !item.completed;
-        
-        const { error } = await supabase
-          .from('items')
-          .update({
-            completed,
-            completed_by: completed ? get().currentUser.name : null,
-            completed_at: completed ? new Date().toISOString() : null
-          })
-          .eq('id', id);
-          
-        if (error) {
-          throw error;
-        }
-        
-        // The fetchItems will be triggered automatically by the realtime subscription
+        await ItemsService.toggleItem(id);
       } catch (error) {
         console.error('Error toggling item:', error);
         toast.error('Failed to update item status');
@@ -145,49 +163,27 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
     
     removeItem: async (id) => {
       try {
-        // We'll optimistically update the UI first
+        // Optimistically update the UI
+        const prevItems = get().items;
+        
         set(state => ({
           items: state.items.filter(item => item.id !== id)
         }));
         
-        const { error } = await supabase
-          .from('items')
-          .delete()
-          .eq('id', id);
-          
-        if (error) {
-          throw error;
-        }
-        
-        // No need to refetch as the realtime subscription will handle this
+        await ItemsService.removeItem(id);
         toast.success('Item removed from your grocery list');
       } catch (error) {
+        // Revert the optimistic update
+        get().fetchItems();
+        
         console.error('Error removing item:', error);
         toast.error('Failed to remove item from your grocery list');
-        
-        // Revert the optimistic update if there was an error
-        get().fetchItems();
       }
     },
     
     updateItemQuantity: async (id, quantity) => {
       try {
-        const item = get().items.find(item => item.id === id);
-        
-        if (!item) {
-          throw new Error('Item not found');
-        }
-        
-        const { error } = await supabase
-          .from('items')
-          .update({ quantity })
-          .eq('id', id);
-          
-        if (error) {
-          throw error;
-        }
-        
-        // The fetchItems will be triggered automatically by the realtime subscription
+        await ItemsService.updateItemQuantity(id, quantity);
       } catch (error) {
         console.error('Error updating item quantity:', error);
         toast.error('Failed to update item quantity');

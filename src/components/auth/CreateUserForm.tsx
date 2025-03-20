@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { createUserByAdmin } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -9,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/hooks/useAuth';
 
 // Form validation schema
 const createUserSchema = z.object({
@@ -30,6 +30,7 @@ export type CreateUserFormProps = {
 
 const CreateUserForm: React.FC<CreateUserFormProps> = ({ onCancel, onSuccess }) => {
   const [creatingUser, setCreatingUser] = useState(false);
+  const { signUp } = useAuth();
 
   // Create user form
   const createUserForm = useForm<z.infer<typeof createUserSchema>>({
@@ -44,17 +45,13 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onCancel, onSuccess }) 
   const handleCreateUser = async (values: z.infer<typeof createUserSchema>) => {
     setCreatingUser(true);
     try {
-      const { error } = await createUserByAdmin(values.newEmail, values.newPassword, 'user', values.displayName);
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success('User created successfully');
-        createUserForm.reset();
-        onSuccess();
-      }
-    } catch (error) {
+      await signUp(values.newEmail, values.newPassword, values.displayName);
+      toast.success('User created successfully');
+      createUserForm.reset();
+      onSuccess();
+    } catch (error: any) {
       console.error('Error creating user:', error);
-      toast.error('Failed to create user');
+      toast.error(error.message || 'Failed to create user');
     } finally {
       setCreatingUser(false);
     }

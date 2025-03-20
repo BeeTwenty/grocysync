@@ -1,50 +1,31 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser, isUserAdmin } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LoginForm from '@/components/auth/LoginForm';
-import AdminPanel from '@/components/auth/AdminPanel';
+import CreateUserForm from '@/components/auth/CreateUserForm';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
+  const { isAuthenticated, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('login');
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser();
-      if (user) {
-        // If user is logged in, check if they're admin
-        const admin = await isUserAdmin();
-        setIsAdmin(admin);
-        setAdminLoading(false);
-
-        // Redirect non-admin users to home
-        if (!admin) {
-          navigate('/');
-        }
-      } else {
-        setAdminLoading(false);
-      }
-    };
-    checkAuth();
-  }, [navigate]);
-
-  const handleLoginSuccess = async (isCurrentUserAdmin: boolean) => {
-    if (isCurrentUserAdmin) {
-      toast.success('Logged in as admin');
-      setIsAdmin(true);
-    } else {
-      toast.success('Logged in successfully');
+    // If user is already authenticated, redirect to home
+    if (isAuthenticated && !isLoading) {
       navigate('/');
     }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  const handleLoginSuccess = async () => {
+    toast.success('Logged in successfully');
+    navigate('/');
   };
 
-  if (adminLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -58,19 +39,27 @@ const Auth = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold">GrocySync</h1>
           <p className="text-muted-foreground mt-2">
-            {isAdmin ? "You're logged in as an admin" : "Login to manage the grocery list"}
+            Manage your grocery list
           </p>
         </div>
         
-        {!isAdmin ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsContent value="login" className="mt-4">
-              <LoginForm onLoginSuccess={handleLoginSuccess} />
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <AdminPanel />
-        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="login" className="mt-4">
+            <LoginForm onLoginSuccess={handleLoginSuccess} />
+          </TabsContent>
+          
+          <TabsContent value="signup" className="mt-4">
+            <CreateUserForm 
+              onCancel={() => setActiveTab('login')}
+              onSuccess={() => navigate('/')}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

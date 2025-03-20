@@ -6,10 +6,11 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
-import { updateUserDisplayName, updateUserPassword } from '@/integrations/supabase/client';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { ProfileService } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
 
 // Form validation schema for display name
 const displayNameSchema = z.object({
@@ -45,6 +46,7 @@ type UserProfileFormProps = {
 const UserProfileForm: React.FC<UserProfileFormProps> = ({ onSuccess, initialDisplayName }) => {
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const { updatePassword } = useAuth();
 
   // Display name form
   const displayNameForm = useForm<DisplayNameFormValues>({
@@ -71,15 +73,12 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ onSuccess, initialDis
     
     setIsUpdatingName(true);
     try {
-      const { error } = await updateUserDisplayName(values.displayName);
-      if (error) {
-        toast.error(error.message);
-      } else {
-        onSuccess();
-      }
-    } catch (error) {
+      await ProfileService.updateDisplayName(values.displayName);
+      toast.success('Display name updated successfully');
+      onSuccess();
+    } catch (error: any) {
       console.error('Error updating display name:', error);
-      toast.error('Failed to update display name');
+      toast.error(error.message || 'Failed to update display name');
     } finally {
       setIsUpdatingName(false);
     }
@@ -88,20 +87,17 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ onSuccess, initialDis
   const handleUpdatePassword = async (values: PasswordFormValues) => {
     setIsUpdatingPassword(true);
     try {
-      const { error } = await updateUserPassword(values.currentPassword, values.newPassword);
-      if (error) {
-        toast.error(error.message);
-      } else {
-        passwordForm.reset({
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: '',
-        });
-        onSuccess();
-      }
-    } catch (error) {
+      await updatePassword(values.currentPassword, values.newPassword);
+      passwordForm.reset({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+      toast.success('Password updated successfully');
+      onSuccess();
+    } catch (error: any) {
       console.error('Error updating password:', error);
-      toast.error('Failed to update password');
+      toast.error(error.message || 'Failed to update password');
     } finally {
       setIsUpdatingPassword(false);
     }

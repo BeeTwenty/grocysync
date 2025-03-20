@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signIn, upsertUserProfile } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -10,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/hooks/useAuth';
 
 // Form validation schema
 const loginSchema = z.object({
@@ -30,6 +30,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = React.useState(false);
+  const { signIn } = useAuth();
 
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -43,32 +44,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     setLoading(true);
     try {
-      const {
-        error,
-        data
-      } = await signIn(values.email, values.password);
-      if (error) {
-        toast.error(error.message);
-      } else {
-        // Create or update profile if it doesn't exist
-        if (data && data.user) {
-          try {
-            // Use user email as display name if none was provided (first-time login)
-            const displayName = data.user.user_metadata?.name || values.email;
-
-            // Update or create profile
-            await upsertUserProfile(data.user.id, data.user.email || '', displayName);
-          } catch (profileError) {
-            console.error('Error creating/updating profile:', profileError);
-          }
-        }
-
-        // Signal login success to parent component
-        onLoginSuccess(false);
-      }
-    } catch (error) {
+      await signIn(values.email, values.password);
+      toast.success('Logged in successfully');
+      onLoginSuccess(false); // We don't have admin roles in this version
+    } catch (error: any) {
       console.error('Login error:', error);
-      toast.error('Failed to login');
+      toast.error(error.message || 'Failed to login');
     } finally {
       setLoading(false);
     }
