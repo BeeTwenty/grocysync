@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signIn, upsertUserProfile } from '@/integrations/supabase/client';
@@ -12,16 +13,18 @@ import { Input } from '@/components/ui/input';
 
 // Form validation schema
 const loginSchema = z.object({
-  emailOrDisplayName: z.string().min(1, {
-    message: 'Email or display name is required'
+  email: z.string().email({
+    message: 'Please enter a valid email address'
   }),
   password: z.string().min(6, {
     message: 'Password must be at least 6 characters'
   })
 });
+
 export type LoginFormProps = {
   onLoginSuccess: (isAdmin: boolean) => void;
 };
+
 const LoginForm: React.FC<LoginFormProps> = ({
   onLoginSuccess
 }) => {
@@ -32,17 +35,18 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      emailOrDisplayName: '',
+      email: '',
       password: ''
     }
   });
+
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     setLoading(true);
     try {
       const {
         error,
         data
-      } = await signIn(values.emailOrDisplayName, values.password);
+      } = await signIn(values.email, values.password);
       if (error) {
         toast.error(error.message);
       } else {
@@ -50,7 +54,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         if (data && data.user) {
           try {
             // Use user email as display name if none was provided (first-time login)
-            const displayName = data.user.user_metadata?.name || values.emailOrDisplayName;
+            const displayName = data.user.user_metadata?.name || values.email;
 
             // Update or create profile
             await upsertUserProfile(data.user.id, data.user.email || '', displayName);
@@ -69,14 +73,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
       setLoading(false);
     }
   };
+
   return <Form {...loginForm}>
       <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-        <FormField control={loginForm.control} name="emailOrDisplayName" render={({
+        <FormField control={loginForm.control} name="email" render={({
         field
       }) => <FormItem>
-              <FormLabel>Login with Email</FormLabel>
+              <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your email or display name" {...field} />
+                <Input placeholder="Enter your email" type="email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>} />
@@ -98,4 +103,5 @@ const LoginForm: React.FC<LoginFormProps> = ({
       </form>
     </Form>;
 };
+
 export default LoginForm;
