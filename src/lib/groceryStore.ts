@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { GroceryItem, CategoryType, CategoryDefinition } from '../types/grocery';
-import { supabase, getUserDisplayName } from '@/integrations/supabase/client';
+import { supabase, getUserDisplayName, updateUserDisplayName } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // Define categories with their properties using the updated data
@@ -40,11 +40,10 @@ const getCurrentUser = async () => {
   };
 };
 
-// Store is no longer needed as we use Supabase user_metadata
+// Updated to use the proper authentication update method
 export const setUserName = async (name: string) => {
-  const { error } = await supabase.auth.updateUser({
-    data: { name }
-  });
+  // Use the updateUserDisplayName function from the client
+  const { data, error } = await updateUserDisplayName(name);
   
   if (error) {
     toast.error('Failed to update display name');
