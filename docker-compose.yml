@@ -2,28 +2,13 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-grocysync}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-grocysync_password}
-      POSTGRES_DB: ${POSTGRES_DB:-grocysync}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./migrations:/docker-entrypoint-initdb.d
-
   api:
     build:
       context: ./api
       dockerfile: Dockerfile
     restart: always
-    depends_on:
-      - postgres
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-grocysync}:${POSTGRES_PASSWORD:-grocysync_password}@postgres:5432/${POSTGRES_DB:-grocysync}
+      DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_here}
       PORT: ${API_PORT:-3001}
       NODE_ENV: ${NODE_ENV:-development}
@@ -46,6 +31,3 @@ services:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
     env_file:
       - .env
-
-volumes:
-  postgres_data:
