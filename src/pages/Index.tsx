@@ -14,7 +14,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
 const Index = () => {
   const {
     items,
@@ -89,9 +88,7 @@ const Index = () => {
   // Count uncompleted items
   const uncompletedCount = items.filter(item => !item.completed).length;
   const unknownCount = unknownItems.length;
-  
-  return (
-    <div className="min-h-screen bg-background pb-20">
+  return <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <header className="sticky top-0 z-10 glass backdrop-blur-md border-b border-border/40 mb-6">
         <div className="container mx-auto py-4">
@@ -104,62 +101,31 @@ const Index = () => {
             <div className="flex items-center gap-3 md:gap-2">
               <ThemeToggle />
               
-              {isSettingName ? (
-                <form onSubmit={handleNameChange} className="flex gap-2">
-                  <Input 
-                    className="h-9 glass border-none" 
-                    placeholder="Your name" 
-                    value={newName} 
-                    onChange={e => setNewName(e.target.value)} 
-                    autoFocus 
-                  />
-                  <Button 
-                    type="submit" 
-                    size="sm" 
-                    className="glass border-none bg-primary text-white"
-                  >
+              {isSettingName ? <form onSubmit={handleNameChange} className="flex gap-2">
+                  <Input className="h-9 glass border-none" placeholder="Your name" value={newName} onChange={e => setNewName(e.target.value)} autoFocus />
+                  <Button type="submit" size="sm" className="glass border-none bg-primary text-white">
                     Save
                   </Button>
-                </form>
-              ) : (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setIsSettingName(true)} 
-                  className="text-muted-foreground hover:text-foreground flex gap-2 items-center px-2 sm:px-3"
-                >
+                </form> : <Button variant="ghost" size="sm" onClick={() => setIsSettingName(true)} className="text-muted-foreground hover:text-foreground flex gap-2 items-center px-2 sm:px-3">
                   <UserRound className="h-4 w-4" />
                   {!isMobile && <span>{currentUser.name}</span>}
-                </Button>
-              )}
+                </Button>}
               
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleSignOut} 
-                className="text-muted-foreground hover:text-foreground flex gap-2 items-center px-2 sm:px-3"
-              >
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground flex gap-2 items-center px-2 sm:px-3">
                 <LogOut className="h-4 w-4" />
                 {!isMobile && <span>Sign Out</span>}
               </Button>
               
-              {!isMobile && (
-                <Button 
-                  onClick={() => setIsAddDialogOpen(true)} 
-                  className="glass border-none bg-primary text-white ml-1"
-                >
+              {!isMobile && <Button onClick={() => setIsAddDialogOpen(true)} className="glass border-none bg-primary text-white ml-1">
                   <Plus className="mr-2 h-4 w-4" /> Add Item
-                </Button>
-              )}
+                </Button>}
             </div>
           </div>
           
           {/* QuickAdd component for both mobile and desktop */}
-          {hasItems && (
-            <div className="mt-3 mb-1">
+          {hasItems && <div className="mt-3 mb-1">
               <QuickAdd />
-            </div>
-          )}
+            </div>}
         </div>
       </header>
 
@@ -169,10 +135,10 @@ const Index = () => {
             <RefreshCw className="h-8 w-8 text-primary animate-spin" />
           </div> : !hasItems ? <EmptyState onAddItem={() => setIsAddDialogOpen(true)} /> : <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="w-full max-w-md mx-auto mb-6">
-              <TabsTrigger value="all" className="flex-1">
+              <TabsTrigger value="all" className="flex-1 rounded-full">
                 All Items
               </TabsTrigger>
-              <TabsTrigger value="unknown" className="flex-1 flex items-center gap-1">
+              <TabsTrigger value="unknown" className="flex-1 flex items-center gap-1 rounded-full">
                 <span>Uncategorized</span>
                 {unknownCount > 0 && <span className="ml-1 text-xs rounded-full bg-secondary px-2 py-0.5 text-muted-foreground">
                     {unknownCount}
@@ -217,8 +183,6 @@ const Index = () => {
 
       {/* Add item dialog */}
       <AddItemDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
