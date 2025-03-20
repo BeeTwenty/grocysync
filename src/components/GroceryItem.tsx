@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Check, Trash2, Plus, Minus } from 'lucide-react';
 import { useGroceryStore } from '@/lib/groceryStore';
@@ -5,10 +6,13 @@ import { GroceryItem as GroceryItemType } from '@/types/grocery';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTheme } from '@/hooks/use-theme';
+
 interface GroceryItemProps {
   item: GroceryItemType;
   categoryColor: string;
 }
+
 const GroceryItem: React.FC<GroceryItemProps> = ({
   item,
   categoryColor
@@ -21,10 +25,10 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   // Format the added time as relative time (e.g., "2 hours ago")
   const getRelativeTime = (date: Date) => {
@@ -86,6 +90,7 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
     const newQuantity = increment ? (item.quantity || 1) + 1 : Math.max(1, (item.quantity || 1) - 1);
     updateItemQuantity(item.id, newQuantity);
   };
+  
   return <div className={cn("group relative glass rounded-xl p-3 transition-all duration-300 animate-scale-in", item.completed ? "opacity-70" : "opacity-100", categoryColor, isMobile ? "p-2.5" : "p-4")} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className="flex items-center gap-3">
         <button onClick={() => toggleItem(item.id)} className={cn("flex shrink-0 items-center justify-center rounded-full border transition-all", item.completed ? "bg-primary border-primary text-white" : "border-gray-300 bg-white text-white hover:border-primary", isMobile ? "h-5 w-5" : "h-6 w-6")} aria-label={item.completed ? "Mark as not purchased" : "Mark as purchased"}>
@@ -99,8 +104,8 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
             </p>
             
             {/* Quantity controls and display */}
-            {!item.completed && <div className="flex items-center gap-1 ml-2 text-foreground rounded-full bg-gray-300 dark:bg-gray-700">
-                <button onClick={() => handleQuantityChange(false)} className={cn("flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors", isMobile ? "h-5 w-5" : "h-7 w-7")} aria-label="Decrease quantity">
+            {!item.completed && <div className={cn("flex items-center gap-1 ml-2 rounded-full", isDarkMode ? "bg-gray-700" : "bg-gray-300")}>
+                <button onClick={() => handleQuantityChange(false)} className={cn("flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors", isMobile ? "h-5 w-5" : "h-7 w-7")} aria-label="Decrease quantity">
                   <Minus className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />
                 </button>
                 
@@ -108,7 +113,7 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
                   {item.quantity || 1}
                 </span>
                 
-                <button onClick={() => handleQuantityChange(true)} className={cn("flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors", isMobile ? "h-5 w-5" : "h-7 w-7")} aria-label="Increase quantity">
+                <button onClick={() => handleQuantityChange(true)} className={cn("flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors", isMobile ? "h-5 w-5" : "h-7 w-7")} aria-label="Increase quantity">
                   <Plus className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />
                 </button>
               </div>}
