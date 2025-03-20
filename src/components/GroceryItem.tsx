@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Check, Trash2, Plus, Minus } from 'lucide-react';
 import { useGroceryStore } from '@/lib/groceryStore';
@@ -30,7 +29,6 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-  // Format the added time as relative time (e.g., "2 hours ago")
   const getRelativeTime = (date: Date) => {
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -40,16 +38,13 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
-  // Set up a timer to delete completed items after 10 seconds
   useEffect(() => {
     let timerId: NodeJS.Timeout | undefined;
     if (item.completed && timeRemaining === null) {
-      // Initialize countdown when an item is first completed
       setTimeRemaining(10);
       timerId = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev === null || prev <= 1) {
-            // When timer reaches 0, clear interval and remove item
             clearInterval(timerId);
             removeItem(item.id);
             toast({
@@ -63,17 +58,14 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
         });
       }, 1000);
     } else if (!item.completed) {
-      // If item is unchecked before timer completes, cancel the timer
       setTimeRemaining(null);
     }
 
-    // Cleanup function to clear the interval when component unmounts
     return () => {
       if (timerId) clearInterval(timerId);
     };
   }, [item.completed, item.id, item.name, removeItem, toast]);
 
-  // Handle touch for mobile users
   const handleTouchStart = () => {
     if (isMobile) {
       setIsTouched(true);
@@ -85,7 +77,6 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
     }
   };
 
-  // Handle quantity adjustment
   const handleQuantityChange = (increment: boolean) => {
     const newQuantity = increment ? (item.quantity || 1) + 1 : Math.max(1, (item.quantity || 1) - 1);
     updateItemQuantity(item.id, newQuantity);
@@ -93,7 +84,15 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
   
   return <div className={cn("group relative glass rounded-xl p-3 transition-all duration-300 animate-scale-in", item.completed ? "opacity-70" : "opacity-100", categoryColor, isMobile ? "p-2.5" : "p-4")} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className="flex items-center gap-3">
-        <button onClick={() => toggleItem(item.id)} className={cn("flex shrink-0 items-center justify-center rounded-full border transition-all", item.completed ? "bg-primary border-primary text-white" : "border-gray-300 bg-white text-white hover:border-primary", isMobile ? "h-5 w-5" : "h-6 w-6")} aria-label={item.completed ? "Mark as not purchased" : "Mark as purchased"}>
+        <button onClick={() => toggleItem(item.id)} className={cn(
+          "flex shrink-0 items-center justify-center rounded-full border transition-all", 
+          item.completed 
+            ? "bg-primary border-primary text-white" 
+            : isDarkMode 
+              ? "border-gray-600 bg-gray-700 text-white hover:border-primary" 
+              : "border-gray-300 bg-white text-white hover:border-primary", 
+          isMobile ? "h-5 w-5" : "h-6 w-6"
+        )} aria-label={item.completed ? "Mark as not purchased" : "Mark as purchased"}>
           {item.completed && <Check className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />}
         </button>
         
@@ -103,7 +102,6 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
               {item.name}
             </p>
             
-            {/* Quantity controls and display */}
             {!item.completed && <div className={cn("flex items-center gap-1 ml-2 rounded-full", isDarkMode ? "bg-gray-700" : "bg-gray-300")}>
                 <button onClick={() => handleQuantityChange(false)} className={cn("flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors", isMobile ? "h-5 w-5" : "h-7 w-7")} aria-label="Decrease quantity">
                   <Minus className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />
@@ -118,7 +116,6 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
                 </button>
               </div>}
             
-            {/* For completed items, just show the quantity */}
             {item.completed && item.quantity && item.quantity > 0 && <span className={cn("ml-2 bg-white/70 text-foreground px-2 py-0.5 rounded-full", isMobile ? "text-xs" : "text-sm")}>
                 {item.quantity}
               </span>}
@@ -135,12 +132,8 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
                 </span>}
             </p>}
           
-          {/* Delete button moved below the count field */}
-          
         </div>
       </div>
-
-      {/* Removed the action div that was previously positioned absolutely */}
     </div>;
 };
 export default GroceryItem;
