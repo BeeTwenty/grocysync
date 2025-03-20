@@ -1,149 +1,41 @@
+
 import { create } from 'zustand';
-import { GroceryItem, CategoryType, CategoryDefinition } from '../types/grocery';
-import { supabase, getUserDisplayName, updateUserDisplayName } from '@/integrations/supabase/client';
+import { GroceryItem, CategoryType } from '../types/grocery';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { GroceryState } from './store/types';
+import { categories, getCategoryById } from './store/categories';
+import { getCurrentUser, setUserName as updateUserName } from './store/userProfile';
+import { fetchItemsFromDB, setupRealtimeSubscription, transformDatabaseItem } from './store/itemOperations';
 
-// Define categories with their properties using the updated data
-export const categories: CategoryDefinition[] = [
-  { id: 'unknown', name: 'Ukjent', icon: 'help-circle', color: 'bg-category-other' },
-  { id: 'baby', name: 'Baby', icon: 'baby', color: 'bg-category-dairy' },
-  { id: 'household', name: 'Husholdningsartikler', icon: 'home', color: 'bg-category-household' },
-  { id: 'snacks', name: 'Snacks', icon: 'cookie', color: 'bg-category-other' },
-  { id: 'frozen', name: 'Frysedisken', icon: 'snowflake', color: 'bg-category-frozen' },
-  { id: 'beverages', name: 'Drikke', icon: 'glass', color: 'bg-category-other' },
-  { id: 'pets', name: 'Kjæledy', icon: 'cat', color: 'bg-category-other' },
-  { id: 'utensils', name: 'Redskaper', icon: 'utensils', color: 'bg-category-household' },
-  { id: 'canned', name: 'Hermetikk', icon: 'package', color: 'bg-category-pantry' },
-  { id: 'checkout', name: 'Kassen', icon: 'shopping-cart', color: 'bg-category-other' },
-  { id: 'easter', name: 'PåskeFerie', icon: 'egg', color: 'bg-category-other' },
-  { id: 'spices', name: 'Krydder', icon: 'flame', color: 'bg-category-pantry' },
-  { id: 'hygiene', name: 'Hygiene', icon: 'droplet', color: 'bg-category-household' },
-  { id: 'dry_goods', name: 'Tørrvare', icon: 'package-2', color: 'bg-category-pantry' },
-  { id: 'bakery', name: 'Bakevarer', icon: 'cookie', color: 'bg-category-bakery' },
-  { id: 'dairy', name: 'Meieri', icon: 'milk', color: 'bg-category-dairy' },
-  { id: 'fruit', name: 'Frukt', icon: 'apple', color: 'bg-category-produce' },
-  { id: 'supplements', name: 'Kosttilskudd', icon: 'pill', color: 'bg-category-other' },
-  { id: 'spreads', name: 'Pålegg', icon: 'utensils', color: 'bg-category-pantry' },
-  { id: 'sauce', name: 'Saus', icon: 'drop', color: 'bg-category-pantry' },
-  { id: 'meat', name: 'Kjøtt', icon: 'drumstick', color: 'bg-category-meat' },
-  { id: 'misc', name: 'Diverse', icon: 'more-horizontal', color: 'bg-category-other' },
-  { id: 'herbs', name: 'Urter', icon: 'plant', color: 'bg-category-produce' },
-  { id: 'vegetables', name: 'Grønnsaker', icon: 'carrot', color: 'bg-category-produce' }
-];
-
-// Get current user from Supabase
-const getCurrentUser = async () => {
-  const displayName = await getUserDisplayName();
-  return {
-    id: 'user1',
-    name: displayName || 'You'
-  };
-};
-
-// Updated to use the proper authentication update method
-export const setUserName = async (name: string) => {
-  // Use the updateUserDisplayName function from the client
-  const { data, error } = await updateUserDisplayName(name);
-  
-  if (error) {
-    toast.error('Failed to update display name');
-    console.error('Error updating display name:', error);
-    return false;
-  }
-  
-  toast.success('Display name updated successfully');
-  return true;
-};
-
-// Function to transform database item to app format
-const transformDatabaseItem = (item: any): GroceryItem => ({
-  id: item.id,
-  name: item.name,
-  category: item.category as CategoryType,
-  completed: item.completed,
-  quantity: item.quantity || undefined,
-  unit: item.unit || undefined,
-  addedBy: item.added_by,
-  addedAt: new Date(item.added_at),
-  completedBy: item.completed_by || undefined,
-  completedAt: item.completed_at ? new Date(item.completed_at) : undefined
-});
-
-interface GroceryState {
-  items: GroceryItem[];
-  currentUser: { id: string; name: string };
-  isLoading: boolean;
-  error: string | null;
-  fetchItems: () => Promise<void>;
-  fetchCurrentUser: () => Promise<void>;
-  addItem: (item: Omit<GroceryItem, 'id' | 'addedBy' | 'addedAt' | 'category'> & { category?: CategoryType }) => Promise<void>;
-  toggleItem: (id: string) => Promise<void>;
-  removeItem: (id: string) => Promise<void>;
-  updateItemQuantity: (id: string, quantity: number) => Promise<void>;
-  setUserName: (name: string) => Promise<void>;
-}
+// Export categories and getCategoryById for backward compatibility
+export { categories, getCategoryById };
+export { setUserName } from './store/userProfile';
 
 export const useGroceryStore = create<GroceryState>((set, get) => {
-  // Set up realtime subscription with individual handlers for each event type
-  const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'items'
-        },
-        (payload) => {
-          // Handle new items by adding them to state directly
-          const newItem = transformDatabaseItem(payload.new);
-          set((state) => ({
-            items: [newItem, ...state.items]
-          }));
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'items'
-        },
-        (payload) => {
-          // Handle item updates by updating the specific item
-          const updatedItem = transformDatabaseItem(payload.new);
-          set((state) => ({
-            items: state.items.map(item => 
-              item.id === updatedItem.id ? updatedItem : item
-            )
-          }));
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'items'
-        },
-        (payload) => {
-          // Handle item deletion by removing the specific item
-          set((state) => ({
-            items: state.items.filter(item => item.id !== payload.old.id)
-          }));
-        }
-      )
-      .subscribe();
-
-    // Return cleanup function
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
-
   // Set up realtime subscription when the store is created
-  setupRealtimeSubscription();
+  const cleanup = setupRealtimeSubscription(
+    // Handle INSERT
+    (newItem) => {
+      set((state) => ({
+        items: [newItem, ...state.items]
+      }));
+    },
+    // Handle UPDATE
+    (updatedItem) => {
+      set((state) => ({
+        items: state.items.map(item => 
+          item.id === updatedItem.id ? updatedItem : item
+        )
+      }));
+    },
+    // Handle DELETE
+    (id) => {
+      set((state) => ({
+        items: state.items.filter(item => item.id !== id)
+      }));
+    }
+  );
 
   return {
     items: [],
@@ -155,19 +47,8 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
       set({ isLoading: true, error: null });
       
       try {
-        const { data: items, error } = await supabase
-          .from('items')
-          .select('*')
-          .order('added_at', { ascending: false });
-          
-        if (error) {
-          throw error;
-        }
-        
-        // Transform database items to our app's format
-        const transformedItems: GroceryItem[] = items.map(transformDatabaseItem);
-        
-        set({ items: transformedItems, isLoading: false });
+        const items = await fetchItemsFromDB();
+        set({ items, isLoading: false });
       } catch (error) {
         console.error('Error fetching items:', error);
         set({ 
@@ -314,7 +195,7 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
     },
     
     setUserName: async (name) => {
-      const success = await setUserName(name);
+      const success = await updateUserName(name);
       if (success) {
         set(state => ({
           currentUser: { ...state.currentUser, name }
@@ -323,8 +204,3 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
     }
   };
 });
-
-// Function to get category by ID
-export const getCategoryById = (categoryId: CategoryType): CategoryDefinition => {
-  return categories.find(category => category.id === categoryId) || categories[0]; // Return 'unknown' as default
-};
