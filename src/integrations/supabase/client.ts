@@ -140,6 +140,10 @@ export const updateUserDisplayName = async (displayName: string) => {
   // Also update or create the profile in the profiles table
   if (!userError) {
     await upsertUserProfile(user.id, user.email || '', displayName);
+    
+    // Log the successful update for debugging
+    console.log('Display name updated successfully:', displayName);
+    console.log('User metadata after update:', userData?.user.user_metadata);
   }
 
   return { data: userData, error: userError };
