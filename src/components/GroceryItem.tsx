@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Check, Trash2, Plus, Minus } from 'lucide-react';
 import { useGroceryStore } from '@/lib/groceryStore';
 import { GroceryItem as GroceryItemType } from '@/types/grocery';
@@ -25,6 +25,7 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const timerIdRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { theme } = useTheme();
@@ -39,23 +40,37 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
+  // Initialize timer when item is marked as completed
   useEffect(() => {
-    let timerId: NodeJS.Timeout | undefined;
+    // Clear any existing timer
+    if (timerIdRef.current) {
+      clearInterval(timerIdRef.current);
+      timerIdRef.current = null;
+    }
     
     // Only start a new timer if the item is completed and we don't already have a timer running
     if (item.completed && timeRemaining === null) {
       setTimeRemaining(10);
       
-      timerId = setInterval(() => {
+      timerIdRef.current = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev === null || prev <= 1) {
-            clearInterval(timerId);
-            removeItem(item.id);
-            toast({
-              title: "Item Removed",
-              description: `${item.name} has been automatically removed from your list.`,
-              duration: 3000
-            });
+            if (timerIdRef.current) {
+              clearInterval(timerIdRef.current);
+              timerIdRef.current = null;
+            }
+            
+            // Use a setTimeout to ensure the state update happens separately 
+            // from the render cycle
+            setTimeout(() => {
+              removeItem(item.id);
+              toast({
+                title: "Item Removed",
+                description: `${item.name} has been automatically removed from your list.`,
+                duration: 3000
+              });
+            }, 0);
+            
             return null;
           }
           return prev - 1;
@@ -63,13 +78,15 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
       }, 1000);
     } else if (!item.completed) {
       // Reset the timer if the item is uncompleted
-      clearInterval(timerId);
       setTimeRemaining(null);
     }
 
     // Cleanup function to clear interval when component unmounts
     return () => {
-      if (timerId) clearInterval(timerId);
+      if (timerIdRef.current) {
+        clearInterval(timerIdRef.current);
+        timerIdRef.current = null;
+      }
     };
   }, [item.completed, item.id, item.name, removeItem, toast]);
 
