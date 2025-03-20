@@ -56,6 +56,20 @@ export const setUserName = async (name: string) => {
   return true;
 };
 
+// Function to transform database item to app format
+const transformDatabaseItem = (item: any): GroceryItem => ({
+  id: item.id,
+  name: item.name,
+  category: item.category as CategoryType,
+  completed: item.completed,
+  quantity: item.quantity || undefined,
+  unit: item.unit || undefined,
+  addedBy: item.added_by,
+  addedAt: new Date(item.added_at),
+  completedBy: item.completed_by || undefined,
+  completedAt: item.completed_at ? new Date(item.completed_at) : undefined
+});
+
 interface GroceryState {
   items: GroceryItem[];
   currentUser: { id: string; name: string };
@@ -71,20 +85,54 @@ interface GroceryState {
 }
 
 export const useGroceryStore = create<GroceryState>((set, get) => {
-  // Set up realtime subscription
+  // Set up realtime subscription with individual handlers for each event type
   const setupRealtimeSubscription = () => {
     const channel = supabase
       .channel('schema-db-changes')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'items'
         },
-        () => {
-          // Refetch items when changes occur
-          get().fetchItems();
+        (payload) => {
+          // Handle new items by adding them to state directly
+          const newItem = transformDatabaseItem(payload.new);
+          set((state) => ({
+            items: [newItem, ...state.items]
+          }));
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'items'
+        },
+        (payload) => {
+          // Handle item updates by updating the specific item
+          const updatedItem = transformDatabaseItem(payload.new);
+          set((state) => ({
+            items: state.items.map(item => 
+              item.id === updatedItem.id ? updatedItem : item
+            )
+          }));
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'items'
+        },
+        (payload) => {
+          // Handle item deletion by removing the specific item
+          set((state) => ({
+            items: state.items.filter(item => item.id !== payload.old.id)
+          }));
         }
       )
       .subscribe();
@@ -118,18 +166,7 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
         }
         
         // Transform database items to our app's format
-        const transformedItems: GroceryItem[] = items.map(item => ({
-          id: item.id,
-          name: item.name,
-          category: item.category as CategoryType,
-          completed: item.completed,
-          quantity: item.quantity || undefined,
-          unit: item.unit || undefined,
-          addedBy: item.added_by,
-          addedAt: new Date(item.added_at),
-          completedBy: item.completed_by || undefined,
-          completedAt: item.completed_at ? new Date(item.completed_at) : undefined
-        }));
+        const transformedItems: GroceryItem[] = items.map(transformDatabaseItem);
         
         set({ items: transformedItems, isLoading: false });
       } catch (error) {
@@ -228,6 +265,11 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
     
     removeItem: async (id) => {
       try {
+        // We'll optimistically update the UI first
+        set(state => ({
+          items: state.items.filter(item => item.id !== id)
+        }));
+        
         const { error } = await supabase
           .from('items')
           .delete()
@@ -237,11 +279,14 @@ export const useGroceryStore = create<GroceryState>((set, get) => {
           throw error;
         }
         
-        // The fetchItems will be triggered automatically by the realtime subscription
+        // No need to refetch as the realtime subscription will handle this
         toast.success('Item removed from your grocery list');
       } catch (error) {
         console.error('Error removing item:', error);
         toast.error('Failed to remove item from your grocery list');
+        
+        // Revert the optimistic update if there was an error
+        get().fetchItems();
       }
     },
     
