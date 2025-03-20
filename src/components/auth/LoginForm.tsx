@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signIn, upsertUserProfile } from '@/integrations/supabase/client';
@@ -20,12 +19,12 @@ const loginSchema = z.object({
     message: 'Password must be at least 6 characters'
   })
 });
-
 export type LoginFormProps = {
   onLoginSuccess: (isAdmin: boolean) => void;
 };
-
-const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
+const LoginForm: React.FC<LoginFormProps> = ({
+  onLoginSuccess
+}) => {
   const navigate = useNavigate();
   const [loading, setLoading] = React.useState(false);
 
@@ -37,7 +36,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
       password: ''
     }
   });
-
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     setLoading(true);
     try {
@@ -60,7 +58,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
             console.error('Error creating/updating profile:', profileError);
           }
         }
-        
+
         // Signal login success to parent component
         onLoginSuccess(false);
       }
@@ -71,45 +69,33 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
       setLoading(false);
     }
   };
-
-  return (
-    <Form {...loginForm}>
+  return <Form {...loginForm}>
       <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-        <FormField 
-          control={loginForm.control} 
-          name="emailOrDisplayName" 
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email or Display Name</FormLabel>
+        <FormField control={loginForm.control} name="emailOrDisplayName" render={({
+        field
+      }) => <FormItem>
+              <FormLabel>Login with Email</FormLabel>
               <FormControl>
                 <Input placeholder="Enter your email or display name" {...field} />
               </FormControl>
               <FormMessage />
-            </FormItem>
-          )} 
-        />
+            </FormItem>} />
         
-        <FormField 
-          control={loginForm.control} 
-          name="password" 
-          render={({ field }) => (
-            <FormItem>
+        <FormField control={loginForm.control} name="password" render={({
+        field
+      }) => <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
                 <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
               <FormMessage />
-            </FormItem>
-          )} 
-        />
+            </FormItem>} />
         
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Login
         </Button>
       </form>
-    </Form>
-  );
+    </Form>;
 };
-
 export default LoginForm;
