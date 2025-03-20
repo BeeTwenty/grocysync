@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Check, Trash2, Plus, Minus } from 'lucide-react';
 import { useGroceryStore } from '@/lib/groceryStore';
@@ -40,8 +41,11 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
 
   useEffect(() => {
     let timerId: NodeJS.Timeout | undefined;
+    
+    // Only start a new timer if the item is completed and we don't already have a timer running
     if (item.completed && timeRemaining === null) {
       setTimeRemaining(10);
+      
       timerId = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev === null || prev <= 1) {
@@ -58,9 +62,12 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
         });
       }, 1000);
     } else if (!item.completed) {
+      // Reset the timer if the item is uncompleted
+      clearInterval(timerId);
       setTimeRemaining(null);
     }
 
+    // Cleanup function to clear interval when component unmounts
     return () => {
       if (timerId) clearInterval(timerId);
     };
@@ -71,6 +78,7 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
       setIsTouched(true);
     }
   };
+  
   const handleTouchEnd = () => {
     if (isMobile) {
       setIsTouched(false);
@@ -127,7 +135,7 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
           
           {item.completed && item.completedBy && item.completedAt && <p className={cn("text-muted-foreground", isMobile ? "text-[10px]" : "text-xs")}>
               Purchased by {item.completedBy} {getRelativeTime(item.completedAt)}
-              {timeRemaining !== null && <span className="ml-2 text-red-500 font-medium">
+              {timeRemaining !== null && <span className="ml-2 text-red-500 font-medium animate-pulse">
                   Removing in {timeRemaining}s
                 </span>}
             </p>}
