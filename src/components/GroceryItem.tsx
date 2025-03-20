@@ -191,27 +191,24 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
               )}
             </p>
           )}
+          
+          {/* Delete button moved below the count field */}
+          <div className="w-full flex justify-end mt-2">
+            <button 
+              onClick={() => removeItem(item.id)}
+              className={cn(
+                "rounded-full text-red-500 bg-white/80 hover:bg-white transition-colors",
+                isMobile ? "p-1" : "p-2"
+              )}
+              aria-label="Delete item"
+            >
+              <Trash2 className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Actions that appear on hover or always visible on mobile */}
-      <div 
-        className={cn(
-          "absolute right-2 top-2 flex space-x-1 transition-opacity",
-          (isHovered || isTouched || isMobile) ? "opacity-100" : "opacity-0"
-        )}
-      >
-        <button 
-          onClick={() => removeItem(item.id)}
-          className={cn(
-            "rounded-full p-1.5 text-red-500 bg-white/80 hover:bg-white transition-colors",
-            isMobile ? "p-1" : "p-2"
-          )}
-          aria-label="Delete item"
-        >
-          <Trash2 className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} />
-        </button>
-      </div>
+      {/* Removed the action div that was previously positioned absolutely */}
     </div>
   );
 };
