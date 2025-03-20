@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RegisterPWA from "./components/pwa/RegisterPWA";
+import OfflineIndicator from "./components/pwa/OfflineIndicator";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +18,8 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <RegisterPWA />
+      <OfflineIndicator />
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
