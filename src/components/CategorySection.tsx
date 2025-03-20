@@ -9,6 +9,8 @@ import {
   Package2, Milk, Pill, Drumstick, MoreHorizontal, 
   Leaf, Carrot, HelpCircle, Cannabis 
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CategorySectionProps {
   category: CategoryDefinition;
@@ -57,23 +59,27 @@ const categoryIcons: Record<string, React.FC<{ className?: string }>> = {
 const CategorySection: React.FC<CategorySectionProps> = ({ category, items }) => {
   // Get the icon component or default to HelpCircle
   const IconComponent = categoryIcons[category.icon] || HelpCircle;
+  const isMobile = useIsMobile();
 
   // Don't render the section if there are no items
   if (items.length === 0) return null;
 
   return (
-    <div className="mb-8 animate-slide-up" style={{ animationDelay: `${0.05 * items.length}s` }}>
-      <div className="flex items-center gap-2 mb-3">
-        <div className={`rounded-full ${category.color} dark:bg-opacity-30 p-2 w-8 h-8 flex items-center justify-center`}>
-          <IconComponent className="h-4 w-4 text-foreground/80" />
+    <div className="mb-6 animate-slide-up" style={{ animationDelay: `${0.05 * items.length}s` }}>
+      <div className="flex items-center gap-2 mb-2">
+        <div className={cn(
+          `rounded-full ${category.color} dark:bg-opacity-30 flex items-center justify-center`,
+          isMobile ? "p-1.5 w-6 h-6" : "p-2 w-8 h-8"
+        )}>
+          <IconComponent className={cn("text-foreground/80", isMobile ? "h-3 w-3" : "h-4 w-4")} />
         </div>
-        <h2 className="text-xl font-medium">{category.name}</h2>
+        <h2 className={cn("font-medium", isMobile ? "text-lg" : "text-xl")}>{category.name}</h2>
         <span className="text-sm rounded-full bg-secondary px-2 py-0.5 text-muted-foreground">
           {items.filter(item => !item.completed).length}
         </span>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
         {items.map((item) => (
           <GroceryItem 
             key={item.id} 

@@ -91,9 +91,10 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
   return (
     <div 
       className={cn(
-        "group relative glass rounded-xl p-4 transition-all duration-300 animate-scale-in",
+        "group relative glass rounded-xl p-3 transition-all duration-300 animate-scale-in",
         item.completed ? "opacity-70" : "opacity-100",
-        categoryColor
+        categoryColor,
+        isMobile ? "p-2.5" : "p-4"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -104,21 +105,23 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
         <button
           onClick={() => toggleItem(item.id)}
           className={cn(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-all",
+            "flex shrink-0 items-center justify-center rounded-full border transition-all",
             item.completed 
               ? "bg-primary border-primary text-white" 
-              : "border-gray-300 bg-white text-white hover:border-primary"
+              : "border-gray-300 bg-white text-white hover:border-primary",
+            isMobile ? "h-5 w-5" : "h-6 w-6"
           )}
           aria-label={item.completed ? "Mark as not purchased" : "Mark as purchased"}
         >
-          {item.completed && <Check className="h-3 w-3" />}
+          {item.completed && <Check className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />}
         </button>
         
-        <div className="flex-1 space-y-1">
+        <div className="flex-1 space-y-0.5">
           <div className="flex items-center justify-between">
             <p className={cn(
-              "font-medium transition-all text-base",
-              item.completed && "line-through text-muted-foreground"
+              "font-medium transition-all",
+              item.completed && "line-through text-muted-foreground",
+              isMobile ? "text-sm" : "text-base"
             )}>
               {item.name}
             </p>
@@ -128,40 +131,58 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
               <div className="flex items-center gap-1 ml-2 bg-white/70 text-foreground rounded-full">
                 <button 
                   onClick={() => handleQuantityChange(false)}
-                  className="h-7 w-7 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
+                  className={cn(
+                    "flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors",
+                    isMobile ? "h-5 w-5" : "h-7 w-7"
+                  )}
                   aria-label="Decrease quantity"
                 >
-                  <Minus className="h-3 w-3" />
+                  <Minus className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />
                 </button>
                 
-                <span className="text-sm px-1 min-w-6 text-center">
+                <span className={cn(
+                  "px-1 min-w-6 text-center",
+                  isMobile ? "text-xs" : "text-sm"
+                )}>
                   {item.quantity || 1}
                 </span>
                 
                 <button 
                   onClick={() => handleQuantityChange(true)}
-                  className="h-7 w-7 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
+                  className={cn(
+                    "flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors",
+                    isMobile ? "h-5 w-5" : "h-7 w-7"
+                  )}
                   aria-label="Increase quantity"
                 >
-                  <Plus className="h-3 w-3" />
+                  <Plus className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />
                 </button>
               </div>
             )}
             
             {/* For completed items, just show the quantity */}
             {item.completed && item.quantity && item.quantity > 0 && (
-              <span className="ml-2 text-sm bg-white/70 text-foreground px-2 py-0.5 rounded-full">
+              <span className={cn(
+                "ml-2 bg-white/70 text-foreground px-2 py-0.5 rounded-full",
+                isMobile ? "text-xs" : "text-sm"
+              )}>
                 {item.quantity}
               </span>
             )}
           </div>
           
-          <p className="text-xs text-muted-foreground">
+          <p className={cn(
+            "text-muted-foreground",
+            isMobile ? "text-[10px]" : "text-xs"
+          )}>
             Added by {item.addedBy} {getRelativeTime(item.addedAt)}
           </p>
           
           {item.completed && item.completedBy && item.completedAt && (
-            <p className="text-xs text-muted-foreground">
+            <p className={cn(
+              "text-muted-foreground",
+              isMobile ? "text-[10px]" : "text-xs"
+            )}>
               Purchased by {item.completedBy} {getRelativeTime(item.completedAt)}
               {timeRemaining !== null && (
                 <span className="ml-2 text-red-500 font-medium">
@@ -182,10 +203,13 @@ const GroceryItem: React.FC<GroceryItemProps> = ({ item, categoryColor }) => {
       >
         <button 
           onClick={() => removeItem(item.id)}
-          className="rounded-full p-2 text-red-500 bg-white/80 hover:bg-white transition-colors"
+          className={cn(
+            "rounded-full p-1.5 text-red-500 bg-white/80 hover:bg-white transition-colors",
+            isMobile ? "p-1" : "p-2"
+          )}
           aria-label="Delete item"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} />
         </button>
       </div>
     </div>

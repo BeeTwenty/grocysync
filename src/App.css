@@ -63,8 +63,8 @@ html.dark {
 /* Mobile optimizations */
 @media (max-width: 767px) {
   .container {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
   
   h1 {
@@ -95,5 +95,36 @@ html.dark {
   header button {
     min-height: 40px;
     min-width: 40px;
+  }
+
+  /* Tighter spacing for grocery items on mobile */
+  .grid {
+    gap: 0.5rem;
+  }
+
+  /* Reduce padding on mobile to match the design */
+  .p-3 {
+    padding: 0.5rem;
+  }
+}
+
+/* Item-specific mobile styling */
+@media (max-width: 767px) {
+  /* Make quantities more compact */
+  .quantity-control-mobile {
+    height: 20px !important;
+    width: 20px !important;
+  }
+
+  /* Better align avatars and icons */
+  .avatar-mobile {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Tighter item container on mobile */
+  .item-container-mobile {
+    padding: 8px !important;
+    margin-bottom: 6px !important;
   }
 }
