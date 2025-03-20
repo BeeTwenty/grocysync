@@ -1,19 +1,29 @@
 
 import React, { useState } from 'react';
-import { ShoppingCart, UserRound, LogOut } from 'lucide-react';
+import { ShoppingCart, UserRound, LogOut, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useGroceryStore } from '@/lib/groceryStore';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
-import { signOut } from '@/integrations/supabase/client';
+import { signOut, updateUserDisplayName } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import UserProfileForm from '@/components/profile/UserProfileForm';
 
 const Header = () => {
   const { currentUser, setUserName } = useGroceryStore();
   const [isSettingName, setIsSettingName] = useState(false);
   const [newName, setNewName] = useState(currentUser.name);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
@@ -73,7 +83,7 @@ const Header = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setIsSettingName(true)} 
+                onClick={() => setProfileDialogOpen(true)} 
                 className="text-muted-foreground hover:text-foreground flex gap-2 items-center px-2 sm:px-3"
               >
                 <UserRound className="h-4 w-4" />
@@ -93,6 +103,24 @@ const Header = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>
+              Update your profile details and password
+            </DialogDescription>
+          </DialogHeader>
+          <UserProfileForm 
+            onSuccess={() => {
+              setProfileDialogOpen(false);
+              toast.success('Profile updated successfully');
+            }}
+            initialDisplayName={currentUser.name}
+          />
+        </DialogContent>
+      </Dialog>
     </header>
   );
 };
