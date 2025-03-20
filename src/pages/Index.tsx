@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useGroceryStore, categories } from '@/lib/groceryStore';
 import CategorySection from '@/components/CategorySection';
@@ -90,7 +89,9 @@ const Index = () => {
   // Count uncompleted items
   const uncompletedCount = items.filter(item => !item.completed).length;
   const unknownCount = unknownItems.length;
-  return <div className="min-h-screen bg-background pb-20">
+  
+  return (
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <header className="sticky top-0 z-10 glass backdrop-blur-md border-b border-border/40 mb-6">
         <div className="container mx-auto py-4">
@@ -100,39 +101,65 @@ const Index = () => {
               <h1 className="text-2xl font-medium">GrocySync</h1>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 md:gap-2">
               <ThemeToggle />
               
-              {isSettingName ? <form onSubmit={handleNameChange} className="flex gap-2">
-                  <Input className="h-9 glass border-none" placeholder="Your name" value={newName} onChange={e => setNewName(e.target.value)} autoFocus />
-                  <Button type="submit" size="sm" className="glass border-none bg-primary text-white">
+              {isSettingName ? (
+                <form onSubmit={handleNameChange} className="flex gap-2">
+                  <Input 
+                    className="h-9 glass border-none" 
+                    placeholder="Your name" 
+                    value={newName} 
+                    onChange={e => setNewName(e.target.value)} 
+                    autoFocus 
+                  />
+                  <Button 
+                    type="submit" 
+                    size="sm" 
+                    className="glass border-none bg-primary text-white"
+                  >
                     Save
                   </Button>
-                </form> : <Button variant="ghost" size="sm" onClick={() => setIsSettingName(true)} className="text-muted-foreground hover:text-foreground flex gap-2 items-center">
+                </form>
+              ) : (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsSettingName(true)} 
+                  className="text-muted-foreground hover:text-foreground flex gap-2 items-center px-2 sm:px-3"
+                >
                   <UserRound className="h-4 w-4" />
-                  <span>{currentUser.name}</span>
-                </Button>}
+                  {!isMobile && <span>{currentUser.name}</span>}
+                </Button>
+              )}
               
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={handleSignOut} 
-                className="text-muted-foreground hover:text-foreground flex gap-2 items-center"
+                className="text-muted-foreground hover:text-foreground flex gap-2 items-center px-2 sm:px-3"
               >
                 <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Sign Out</span>
+                {!isMobile && <span>Sign Out</span>}
               </Button>
               
-              {!isMobile && <Button onClick={() => setIsAddDialogOpen(true)} className="glass border-none bg-primary text-slate-500">
+              {!isMobile && (
+                <Button 
+                  onClick={() => setIsAddDialogOpen(true)} 
+                  className="glass border-none bg-primary text-white ml-1"
+                >
                   <Plus className="mr-2 h-4 w-4" /> Add Item
-                </Button>}
+                </Button>
+              )}
             </div>
           </div>
           
           {/* QuickAdd component for both mobile and desktop */}
-          {hasItems && <div className="mt-3 mb-1">
+          {hasItems && (
+            <div className="mt-3 mb-1">
               <QuickAdd />
-            </div>}
+            </div>
+          )}
         </div>
       </header>
 
@@ -190,6 +217,8 @@ const Index = () => {
 
       {/* Add item dialog */}
       <AddItemDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

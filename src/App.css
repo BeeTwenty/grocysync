@@ -84,4 +84,16 @@ html.dark {
   main {
     padding-bottom: 5rem;
   }
+  
+  /* Fix navbar spacing for mobile */
+  .navbar-mobile-spacing {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  
+  /* Improve tap targets on mobile */
+  header button {
+    min-height: 40px;
+    min-width: 40px;
+  }
 }
