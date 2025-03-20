@@ -14,6 +14,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
 const Index = () => {
   const {
     items,
@@ -30,18 +31,15 @@ const Index = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  // Fetch items and current user when component mounts
   useEffect(() => {
     fetchItems();
     fetchCurrentUser();
   }, [fetchItems, fetchCurrentUser]);
 
-  // Update newName when currentUser changes
   useEffect(() => {
     setNewName(currentUser.name);
   }, [currentUser.name]);
 
-  // Handle name change
   const handleNameChange = (e: React.FormEvent) => {
     e.preventDefault();
     if (newName.trim()) {
@@ -50,7 +48,6 @@ const Index = () => {
     }
   };
 
-  // Handle sign out
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -62,11 +59,9 @@ const Index = () => {
     }
   };
 
-  // Group items by category
   const itemsByCategory = categories.map(category => {
     const categoryItems = items.filter(item => item.category === category.id);
 
-    // Sort items: uncompleted first, then by date added (newest first)
     categoryItems.sort((a, b) => {
       if (a.completed !== b.completed) {
         return a.completed ? 1 : -1;
@@ -79,17 +74,14 @@ const Index = () => {
     };
   });
 
-  // Get unknown items
   const unknownItems = items.filter(item => item.category === 'unknown');
 
-  // Check if there are any items
   const hasItems = items.length > 0;
 
-  // Count uncompleted items
   const uncompletedCount = items.filter(item => !item.completed).length;
   const unknownCount = unknownItems.length;
+
   return <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
       <header className="sticky top-0 z-10 glass backdrop-blur-md border-b border-border/40 mb-6">
         <div className="container mx-auto py-4">
           <div className="flex justify-between items-center">
@@ -122,19 +114,17 @@ const Index = () => {
             </div>
           </div>
           
-          {/* QuickAdd component for both mobile and desktop */}
           {hasItems && <div className="mt-3 mb-1">
               <QuickAdd />
             </div>}
         </div>
       </header>
 
-      {/* Main content */}
       <main className="container mx-auto px-4">
         {isLoading ? <div className="flex justify-center items-center h-64">
             <RefreshCw className="h-8 w-8 text-primary animate-spin" />
           </div> : !hasItems ? <EmptyState onAddItem={() => setIsAddDialogOpen(true)} /> : <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="w-full max-w-md mx-auto mb-6">
+            <TabsList className="w-full max-w-md mx-auto mb-6 animate-slide-down">
               <TabsTrigger value="all" className="flex-1 rounded-full">
                 All Items
               </TabsTrigger>
@@ -174,15 +164,14 @@ const Index = () => {
           </Tabs>}
       </main>
 
-      {/* Floating add button (mobile) */}
       <div className="fixed bottom-6 right-6 md:hidden">
         <Button onClick={() => setIsAddDialogOpen(true)} className="glass border-none h-14 w-14 rounded-full bg-primary text-white shadow-lg" size="icon">
           <PlusCircle className="h-6 w-6" />
         </Button>
       </div>
 
-      {/* Add item dialog */}
       <AddItemDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
     </div>;
 };
+
 export default Index;
