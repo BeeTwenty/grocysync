@@ -7,16 +7,8 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icons/icon-72x72.png',
-  '/icons/icon-96x96.png', 
-  '/icons/icon-128x128.png',
-  '/icons/icon-144x144.png',
-  '/icons/icon-152x152.png',
   '/icons/icon-192x192.png',
-  '/icons/icon-384x384.png',
-  '/icons/icon-512x512.png',
-  '/icons/maskable-icon.png',
-  '/icons/apple-touch-icon.png'
+  '/icons/icon-512x512.png'
 ];
 
 // Install service worker
@@ -25,13 +17,7 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        // Instead of failing completely on error, we'll catch errors for individual items
-        const cachePromises = urlsToCache.map(url => 
-          cache.add(url).catch(error => {
-            console.warn(`Failed to cache ${url}: ${error.message}`);
-          })
-        );
-        return Promise.all(cachePromises);
+        return cache.addAll(urlsToCache);
       })
   );
 });
@@ -45,11 +31,7 @@ self.addEventListener('fetch', event => {
         if (response) {
           return response;
         }
-        
-        // Clone the request because it's a one-time use stream
-        const fetchRequest = event.request.clone();
-        
-        return fetch(fetchRequest).then(
+        return fetch(event.request).then(
           response => {
             // Check if we received a valid response
             if (!response || response.status !== 200 || response.type !== 'basic') {
@@ -63,20 +45,13 @@ self.addEventListener('fetch', event => {
               .then(cache => {
                 // Don't cache API requests
                 if (!event.request.url.includes('/api/')) {
-                  cache.put(event.request, responseToCache)
-                    .catch(error => {
-                      console.warn(`Failed to add to cache: ${error.message}`);
-                    });
+                  cache.put(event.request, responseToCache);
                 }
               });
 
             return response;
           }
-        ).catch(() => {
-          // If fetch fails (e.g., offline), we can't do much but log it
-          console.log('Fetch failed; returning offline page instead.');
-          // In the future, you might want to return a custom offline page here
-        });
+        );
       })
   );
 });
@@ -91,8 +66,7 @@ self.addEventListener('activate', event => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
             return caches.delete(cacheName);
           }
-          return null;
-        }).filter(Boolean)
+        })
       );
     })
   );
