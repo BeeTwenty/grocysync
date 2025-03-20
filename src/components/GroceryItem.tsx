@@ -99,7 +99,7 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
             </p>
             
             {/* Quantity controls and display */}
-            {!item.completed && <div className="flex items-center gap-1 ml-2 text-foreground rounded-full bg-gray-300">
+            {!item.completed && <div className="flex items-center gap-1 ml-2 text-foreground rounded-full bg-gray-700">
                 <button onClick={() => handleQuantityChange(false)} className={cn("flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors", isMobile ? "h-5 w-5" : "h-7 w-7")} aria-label="Decrease quantity">
                   <Minus className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />
                 </button>
